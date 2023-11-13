@@ -5,9 +5,15 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
+// Toggle Debug Mode here
+#define MINISERV_DEBUGMODE 1
+
 class MiniServ
 {
 public:
+    //Public Members
+    WebServer WServer;
+
     //Constructor
     MiniServ();
 
@@ -24,7 +30,7 @@ public:
     void InitWebServer(int port=80, int client_timeout=2000);
 
     //Checks if there is an inbound client request
-    bool IsClientRequest();
+    void HandleClientRequests();
 
     //Gets the raw response headers
     String GetRequestHeaders();
@@ -50,39 +56,15 @@ public:
     // Close the client connection
     void SendClientResponse();
 
-    // //Handle incoming web request with function
-    // void on(const char *uri, THandlerFunction fn);
-
-    // //Handle incoming web request with function, specifying method
-    // void on(const char *uri, const char *method, THandlerFunction fn);
-
-    // //Handle incoming web request with function, specifying method and file upload handling function
-    // void on(const char *uri, const char *method, THandlerFunction fn, THandlerFunction uploadfn); 
-
 private:
     String _SSID="";
     String _password="";
     int _port=80;
     int _clientTimeout=2000;
     bool _isWiFiConnected = false;
-    //WiFiServer _WiFiServer;
-    //WiFiClient _client;
-    WebServer _WiFiServer; // = {80};
-    String _requestRawHeader="";
-    String _requestVerb="";
-    String _requestPath="";
-
-    //Writes the contents of a file in the response
-    void WriteFileWebClient(const char *filePath);
     
     //Reads the contents of a file as a string
-    String ReadFileWebClient(const char *filePath);
-
-    //Reads any client requests the server might have received
-    void GetWebClientRequest();
-
-    //Reads the client request header
-    String ReadRawRequestHeader();
+    String ReadFile(const char *filePath);
 
     //Parse raw headers to get path
     String ParseRequestHeaderPath(String headers);
@@ -90,8 +72,8 @@ private:
     //Parse raw headers to get verb
     String ParseRequestHeaderVerb(String headers);
 
-    //Write response header
-    void WriteResponseHeader(int responseCode=200);
+    //Read request headers from client
+    //String ReadRawRequestHeader();
 };
 
 #endif

@@ -13,6 +13,7 @@
 //              https://www.youtube.com/watch?v=UZxY_BLSsGg
 //
 // History:     2023-10-28    PP Laplante   Created
+//              2023-11-13    PP Laplante   Started refoactoring to use new MiniServ
 //
 //
 //---------------------------------------------------------------------------
@@ -43,6 +44,10 @@ MiniServ _server;
 
 //Prototyopes
 void HandleWebRequests();
+void HandleNotFound();
+void HandleMainPage();
+void RedirectMainPage();
+void HandleInfo();
 
 void setup() {
   //initialize pins
@@ -55,7 +60,16 @@ void setup() {
   _server.InitWiFi(WIFI_SSIS, WIFI_PWD);
 
   //Initialize Web Server
+  _server.WServer.on("/", HandleMainPage);
+  _server.WServer.on("/default.htm", RedirectMainPage);
+  _server.WServer.on("/default.html", RedirectMainPage);
+  _server.WServer.on("/index.htm", RedirectMainPage);
+  _server.WServer.on("/index.html", RedirectMainPage);
+  _server.WServer.onNotFound(HandleNotFound);
+  _server.WServer.on("/info", HandleInfo);
+
   _server.InitWebServer();
+  
 
   //Initialize LEDs
   InitLED();
@@ -71,6 +85,7 @@ void setup() {
 void loop() {
   //Handle any web requests
   //HandleWebRequests();
+  _server.HandleClientRequests();
 
   //Handle LED display
   DrawLEDFrame();
@@ -79,8 +94,7 @@ void loop() {
 void HandleWebRequests()
 {
 
-  if(_server.IsClientRequest())
-  {
+
     //indicate data received
     BlinkBoardData();
 
@@ -91,12 +105,11 @@ void HandleWebRequests()
     //DO STUFF HERE
     if (path == "/" || path.startsWith("/index.htm") || path.startsWith("/default.htm"))
     {      
-      _server.PrintFileWebClientResponse("/index.htm");
+      
     }
     else if (path.startsWith("/info"))
     {      
-      String response = "<!doctype html><html><head><title>ESP32 Info</title></head><h1>ESP32 Info</h1><p><h2>Headers:</h2>" + _server.GetRequestHeaders() + "</p><p><h2>Hostname</h2>" + WiFi.getHostname() + "</p><p><h2>MAC</h2>" + WiFi.macAddress() + "</p></html>";
-      _server.PrintWebClientResponse(response);
+
     }
     else if (path.startsWith("/effect/default"))
     {
@@ -141,7 +154,53 @@ void HandleWebRequests()
 
     //close connection
     _server.SendClientResponse();
-  }
+  
 
+}
+
+//Serve Main Page
+void HandleMainPage()
+{
+    //indicate data received
+    BlinkBoardData();
+    
+    //Send the main page fille
+  _server.PrintFileWebClientResponse("/index.htm");
+}
+
+//Redirect to main page
+void RedirectMainPage()
+{
+    //indicate data received
+    BlinkBoardData();
+
+    //TODO: for now just serve page, will create proper handler later
+    HandleMainPage();
+}
+
+//Serve Not Found
+void HandleNotFound()
+{
+    //indicate data received
+    BlinkBoardData();
+    
+    //Send the default Page Not Found file.
+  _server.PrintFileWebClientNotFound("/err404.htm");
+}
+
+//Serve Info Page
+void HandleInfo()
+{
+  //get headers and convert them to html readable format
+  String headers = "Header count: " + String(_server.WServer.headers());
+  headers += "<br />";
+  headers += _server.GetRequestHeaders();
+  headers.replace("/n", "<br />");
+
+  //Build response HTML
+  String response = "<!doctype html><html><head><title>ESP32 Info</title></head><h1>ESP32 Info</h1><p><h2>Headers:</h2>" + headers + "</p><p><h2>Hostname</h2>" + WiFi.getHostname() + "</p><p><h2>MAC</h2>" + WiFi.macAddress() + "</p></html>";
+  
+  //send response
+  _server.PrintWebClientResponse(response);
 }
 
