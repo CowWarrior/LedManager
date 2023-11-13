@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Mini LED Server</title>
+        <!-- Bootstrap Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+        <!-- Bootstrap Optional theme -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    </head>
+    <body>
+        <div class="jumbotron">
+            <div class="container">
+                <h1>Mini LED Server</h1>
+                <p>Control your LEDstrip or array from here.</p>
+            </div>
+        </div>
+
+        <div class="container">
+            <!-- Example row of columns -->
+            <div class="row">
+              <div class="col-md-4">
+                <h2>Effect</h2>
+                <p>
+                    Run a predefined effect:
+                    <select id="cbxEffect">
+                        <option value="default" selected>Default</option>
+                        <option value="rainbow">Rainbow</option>
+                        <option value="solid">Solid Color</option>
+                        <option value="link">Link</option>
+                    </select>
+                    <input id="colSolid" type="color" />
+                </p>
+                <p><a class="btn btn-default" id="btnEffect" href="#" role="button">Set Effect</a></p>
+              </div>
+              <div class="col-md-4">
+                <h2>Brightness</h2>
+                <p>
+                    Set brightness to : <span id="txtBrightness">64</span>
+                </p>
+                <p>
+                    <input type="range" min="0" max="255" value="64" class="slider" id="sldBrightness">
+                </p>
+                <p><a class="btn btn-default" id="btnBrightness" href="#" role="button">Set Brightness</a></p>
+              </div>
+              <div class="col-md-4">
+                <h2>Image</h2>
+                <p>
+                    Set the matrix to an image (<span id='w'>0</span>x<span id='h'>0</span>)
+                    <input type='file' id="btnBrowse" />
+                </p>
+                <p>
+                    <canvas id="cvsImage" width="32" height="32" />                   
+                </p>
+                <p><input type="button" value="Set Image" class="btn btn-default" id="btnImage" role="button" disabled /></p>
+              </div>              
+            </div>
+            <hr>
+            <footer>
+                <p>Mini LED Server</p>
+            </footer>
+        </div> <!-- /container -->
+        
+        <!-- jQuery -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+        <!-- Bootstrap Latest compiled and minified JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+        <!-- Page Script -->
+        <script lang="JavaScript">
+            //functions
+            //read URL from selected file and load image
+            function readURL(input) {
+                if (input.files && input.files[0]) {
+                    var reader = new FileReader();            
+                    reader.onload = function (e) {
+                        var img = new Image();
+                        img.onload = function() {
+                            getImageInfo(this);
+                        }
+                        img.src = e.target.result;
+                        $("#btnImage").prop("disabled", false);
+                    }
+                    reader.readAsDataURL(input.files[0]);
+                }
+            }
+            //get data from loaded image
+            function getImageInfo(img) {
+                var context = document.getElementById("cvsImage").getContext('2d');
+                context.drawImage(img, 0, 0);
+                $('#h').text(img.height);
+                $('#w').text(img.width);
+            }
+
+
+            //ready
+            $(function() {
+                //Send Effect command
+                $("#btnEffect").on("click", function() {
+                    var loc = "./effect/" + $("#cbxEffect").val() + "/" + $("#colSolid").val().replace("#", "");
+                    $.ajax({
+                        url: loc
+                    });
+                });
+                //Send brightness command
+                $("#btnBrightness").on("click", function() {
+                    var i = parseInt($("#sldBrightness").val());
+                    var loc = "./brightness/" + i.toString(16);
+                    $.ajax({
+                        url: loc
+                    });
+                });
+                //Brightness UI feedback
+                $("#sldBrightness").on("input", function() {
+                    var i = parseInt($("#sldBrightness").val());
+                    $("#txtBrightness").text(i.toString(16).toUpperCase());
+                });
+                //File select button
+                $("#btnBrowse").change(function(){
+                    readURL(this);
+                });
+                //Send Image command
+                $("#btnImage").on("click", function() {
+                    //https://stackoverflow.com/questions/19959072/sending-binary-data-in-javascript-over-http
+                    var context = document.getElementById("cvsImage").getContext('2d');
+                    var bytesArray = new Uint8Array(context.getImageData(0, 0, 15, 15).data);
+                    var loc = "./effect/image/";
+                    $.ajax({
+                        url: loc,
+                        type: 'POST',
+                        contentType: 'application/octet-stream',  
+                        data: bytesArray,
+                        processData: false
+                    });
+                });
+            });
+        </script>
+    </body>
+</html>
