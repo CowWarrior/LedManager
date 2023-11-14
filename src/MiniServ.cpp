@@ -17,6 +17,7 @@
 #include <MiniServ.h>
 
 //References:
+//https://github.com/espressif/arduino-esp32/blob/master/libraries/WebServer/
 //https://randomnerdtutorials.com/esp32-web-server-arduino-ide/
 //https://lastminuteengineers.com/creating-esp32-web-server-arduino-ide/
 //https://github.com/espressif/arduino-esp32/blob/master/libraries/WebServer/src/WebServer.h
@@ -124,6 +125,9 @@ void MiniServ::InitWebServer(int port, int client_timeout)
 void MiniServ::HandleClientRequests()
 {
     WServer.handleClient();
+
+    //allow the cpu to switch to other tasks
+    delay(2);
 }
 
 //Gets the raw RequestHeaders
@@ -175,6 +179,18 @@ void MiniServ::PrintWebClientNotFound(String htmlBody)
 {
     //Write string
     WServer.send(404, "text/html", htmlBody);
+}
+
+//Gets the value of a uery string parameter by name
+String MiniServ::GetQueryStringParameter(String paramName)
+{
+    return WServer.arg(paramName);
+}
+
+//Gets the value of a uery string parameter by index
+String MiniServ::GetQueryStringParameter(int paramIndex)
+{
+    return WServer.arg(paramIndex);
 }
 
 //Sends a 404 Not Found to the Web Client and the content of a file in body.

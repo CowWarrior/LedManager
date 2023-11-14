@@ -41,6 +41,12 @@ public:
     //Gets the path of the client request
     String GetRequestPath();
 
+    //Gets the value of a uery string parameter by name
+    String GetQueryStringParameter(String paramName);
+
+    //Gets the value of a uery string parameter by index
+    String GetQueryStringParameter(int paramIndex);
+
     //Sends an HTML response to the Web Client
     void PrintWebClientResponse(String htmlBody);
 
