@@ -96,18 +96,23 @@
             $(function() {
                 //Send Effect command
                 $("#btnEffect").on("click", function() {
-                    var loc = "./effect/" + $("#cbxEffect").val() + "/" + $("#colSolid").val().replace("#", "");
+                    var loc = "./effect";
+                    var dat = {name: $("#cbxEffect").val(), color: $("#colSolid").val().replace("#", "")};
                     $.ajax({
-                        url: loc
+                        url: loc,
+                        data: dat
                     });
                 });
                 //Send brightness command
                 $("#btnBrightness").on("click", function() {
                     var i = parseInt($("#sldBrightness").val());
-                    var loc = "./brightness/" + i.toString(16);
+                    var loc = "./effect";
+                    var dat = {brightness: i.toString(16)};
                     $.ajax({
-                        url: loc
+                        url: loc,
+                        data: dat
                     });
+
                 });
                 //Brightness UI feedback
                 $("#sldBrightness").on("input", function() {

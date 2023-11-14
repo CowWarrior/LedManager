@@ -13,7 +13,7 @@
 //              https://www.youtube.com/watch?v=UZxY_BLSsGg
 //
 // History:     2023-10-28    PP Laplante   Created
-//              2023-11-13    PP Laplante   Started refoactoring to use new MiniServ
+//              2023-11-13    PP Laplante   Use new MiniServ web server
 //
 //
 //---------------------------------------------------------------------------
@@ -29,6 +29,8 @@
 #define WIFI_PWD                "MZZ8zbd9Vv8xtvrG9t38dKRX"
 #define WIFIUTILS_SERVERPORT    80
 
+#define DEBUG_MODE              1
+
 //Libraries
 #include <Arduino.h>
 #include <Wifi.h>
@@ -43,7 +45,7 @@
 MiniServ _server;
 
 //Prototyopes
-void HandleWebRequests();
+void HandleEffect();
 void HandleNotFound();
 void HandleMainPage();
 void RedirectMainPage();
@@ -67,6 +69,7 @@ void setup() {
   _server.WServer.on("/index.html", RedirectMainPage);
   _server.WServer.onNotFound(HandleNotFound);
   _server.WServer.on("/info", HandleInfo);
+  _server.WServer.on("/effect", HandleEffect);
 
   _server.InitWebServer();
   
@@ -91,70 +94,66 @@ void loop() {
   DrawLEDFrame();
 }
 
-void HandleWebRequests()
+void HandleEffect()
 {
+  //indicate data received
+  BlinkBoardData();
 
+  //read parameters
+  String effect = _server.GetQueryStringParameter("name");
+  effect.toLowerCase();
+  String color = _server.GetQueryStringParameter("color");
+  color.toUpperCase();
+  String brightness = _server.GetQueryStringParameter("brightness");
+  brightness.toUpperCase();
 
-    //indicate data received
-    BlinkBoardData();
+  #ifdef DEBUG_MODE
+  PrintlnSerial("effect:" + effect);
+  PrintlnSerial("color:" + color);
+  PrintlnSerial("brightness:" + brightness);
+  #endif
 
-    //read headers
-    String path = _server.GetRequestPath();
-    path.toLowerCase();
+  //DO STUFF HERE
+  if (effect == "default")
+  {
+    SetLEDCurrentEffect("Default");
+    _server.PrintWebClientResponse("Effect set to: Default");
+  }
+  else if (effect == "solid")
+  {
+    SetLEDCurrentEffect("Solid", color);
+    _server.PrintWebClientResponse("Effect set to: Solid (" + GetLEDCurrentEffectParameters() + ")");
+  }
+  else if (effect == "beat")
+  {
+    SetLEDCurrentEffect("Beat");
+    _server.PrintWebClientResponse("Effect set to: Beat");
+  }
+  else if (effect == "link")
+  {
+    SetLEDCurrentEffect("Link");
+    _server.PrintWebClientResponse("Effect set to: Link");
+  }
+  else if (effect == "rainbow")
+  {
+    SetLEDCurrentEffect("Rainbow");
+    _server.PrintWebClientResponse("Effect set to: Rainbow");
+  }
+  else if (effect == "image")
+  {
+    //String p = _server.GetRequestHeaders();
+    //_server.PrintWebClientResponse("Image:" + p);
+    _server.PrintWebClientResponse("Image Effect NOT IMPLEMENTED !!");
+  }    
+  else
+  {
+      //sometimes you just want to adjust brightness or color, dont change anything
+      _server.PrintWebClientResponse("OK");
+  }
 
-    //DO STUFF HERE
-    if (path == "/" || path.startsWith("/index.htm") || path.startsWith("/default.htm"))
-    {      
-      
-    }
-    else if (path.startsWith("/info"))
-    {      
-
-    }
-    else if (path.startsWith("/effect/default"))
-    {
-      SetLEDCurrentEffect("Default");
-      _server.PrintWebClientResponse("Effect set to: Default");
-    }
-    else if (path.startsWith("/effect/solid"))
-    {
-      String p = GetParam(path, '/', 3);
-      p.toUpperCase();
-      SetLEDCurrentEffect("Solid", p);
-      _server.PrintWebClientResponse("Effect set to: Solid (" + GetLEDCurrentEffectParameters() + ")");
-    }
-    else if (path.startsWith("/effect/beat"))
-    {
-      SetLEDCurrentEffect("Beat");
-      _server.PrintWebClientResponse("Effect set to: Beat");
-    }
-    else if (path.startsWith("/effect/link"))
-    {
-      SetLEDCurrentEffect("Link");
-      _server.PrintWebClientResponse("Effect set to: Link");
-    }
-    else if (path.startsWith("/effect/rainbow"))
-    {
-      SetLEDCurrentEffect("Rainbow");
-      _server.PrintWebClientResponse("Effect set to: Rainbow");
-    }
-    else if (path.startsWith("/effect/image"))
-    {
-      String p = _server.GetRequestHeaders();
-      _server.PrintWebClientResponse("Image:" + p);
-    }    
-    else if (path.startsWith("/brightness/"))
-    {
-      String p = GetParam(path, '/', 2);
-      SetLEDBrightness(HexStrToInt(p));
-      _server.PrintWebClientResponse("Brightness set to: " + String(GetLEDBrightness(), HEX));
-    }
-    else
-      _server.PrintFileWebClientNotFound("/err404.htm");
-
-    //close connection
-    _server.SendClientResponse();
-  
+  //adjust brightness if required
+  if (brightness != "")
+    SetLEDBrightness(HexStrToInt(brightness));
 
 }
 
@@ -181,10 +180,10 @@ void RedirectMainPage()
 //Serve Not Found
 void HandleNotFound()
 {
-    //indicate data received
-    BlinkBoardData();
-    
-    //Send the default Page Not Found file.
+  //indicate data received
+  BlinkBoardData();
+  
+  //Send the default Page Not Found file.
   _server.PrintFileWebClientNotFound("/err404.htm");
 }
 
@@ -197,8 +196,23 @@ void HandleInfo()
   headers += _server.GetRequestHeaders();
   headers.replace("/n", "<br />");
 
+  String method = (_server.WServer.method() == HTTP_GET) ? "GET" : "POST";
+  
+  String args = "Arguments: ";
+  args += _server.WServer.args();
+  args += "<br />\n";
+  for (uint8_t i = 0; i < _server.WServer.args(); i++) {
+    args += " " + _server.WServer.argName(i) + ": " + _server.WServer.arg(i) + "<br />\n";
+  }
+
   //Build response HTML
-  String response = "<!doctype html><html><head><title>ESP32 Info</title></head><h1>ESP32 Info</h1><p><h2>Headers:</h2>" + headers + "</p><p><h2>Hostname</h2>" + WiFi.getHostname() + "</p><p><h2>MAC</h2>" + WiFi.macAddress() + "</p></html>";
+  String response = "<!doctype html><html><head><title>ESP32 Info</title></head><h1>ESP32 Info</h1><p><h2>Headers:</h2>" + headers + 
+                    "</p><p><h2>Hostname</h2>" + WiFi.getHostname() + 
+                    "</p><p><h2>MAC</h2>" + WiFi.macAddress() + 
+                    "</p><p><h2>URI</h2>" + _server.WServer.uri() +
+                    "</p><p><h2>Method</h2>" + method +
+                    "</p><p><h2>Arguments</h2>" + args +
+                    "</p></html>";
   
   //send response
   _server.PrintWebClientResponse(response);
