@@ -50,6 +50,7 @@ void HandleNotFound();
 void HandleMainPage();
 void RedirectMainPage();
 void HandleInfo();
+void HandleFavIcon();
 
 void setup() {
   //initialize pins
@@ -70,6 +71,8 @@ void setup() {
   _server.WServer.onNotFound(HandleNotFound);
   _server.WServer.on("/info", HandleInfo);
   _server.WServer.on("/effect", HandleEffect);
+  _server.WServer.on("/favicon.svg", HandleFavIcon);
+
 
   //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
 
@@ -89,7 +92,6 @@ void setup() {
 
 void loop() {
   //Handle any web requests
-  //HandleWebRequests();
   _server.HandleClientRequests();
 
   //Handle LED display
@@ -218,5 +220,11 @@ void HandleInfo()
   
   //send response
   _server.SendResponse(response);
+}
+
+//Favorite icon
+void HandleFavIcon()
+{
+  _server.SendFileResponse("/favicon.svg", 200, "image/svg+xml");
 }
 
