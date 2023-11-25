@@ -48,19 +48,16 @@ public:
     String GetQueryStringParameter(int paramIndex);
 
     //Sends an HTML response to the Web Client
-    void PrintWebClientResponse(String htmlBody);
+    void SendResponse(String htmlBody);
 
     //Sends a file to the Web Client
-    void PrintFileWebClientResponse(const char *filePath);
+    void SendFileResponse(const char *filePath);
 
     //Sends a 404 Not Found to the Web Client, optionally with a body
-    void PrintWebClientNotFound(String htmlBody="");
+    void SendNotFound(String htmlBody="");
 
     //Sends a 404 Not Found to the Web Client and the content of a file in body.
-    void PrintFileWebClientNotFound(const char *filePath);
-
-    // Close the client connection
-    void SendClientResponse();
+    void SendFileNotFound(const char *filePath);
 
 private:
     String _SSID="";

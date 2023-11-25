@@ -162,20 +162,20 @@ String MiniServ::GetRequestPath()
 }
 
 //Sends an HTML response to the Web Client
-void MiniServ::PrintWebClientResponse(String htmlBody)
+void MiniServ::SendResponse(String htmlBody)
 {
     WServer.send(200, "text/html", htmlBody);
 }
 
 //Sends a file to the Web Client
-void MiniServ::PrintFileWebClientResponse(const char *filePath)
+void MiniServ::SendFileResponse(const char *filePath)
 {
     //Write body
-    PrintWebClientResponse(ReadFile(filePath));
+    SendResponse(ReadFile(filePath));
 }
 
 //Sends a 404 Not Found to the Web Client, optionally with a body
-void MiniServ::PrintWebClientNotFound(String htmlBody)
+void MiniServ::SendNotFound(String htmlBody)
 {
     //Write string
     WServer.send(404, "text/html", htmlBody);
@@ -194,21 +194,10 @@ String MiniServ::GetQueryStringParameter(int paramIndex)
 }
 
 //Sends a 404 Not Found to the Web Client and the content of a file in body.
-void MiniServ::PrintFileWebClientNotFound(const char *filePath)
+void MiniServ::SendFileNotFound(const char *filePath)
 {
     //Write body
     WServer.send(404, "text/html", ReadFile(filePath));
-}
-
-// Close the client connection
-void MiniServ::SendClientResponse()
-{
-    //_client.stop();
-
-    #ifdef MINISERV_DEBUGMODE
-        if (Serial)
-            Serial.println("Closed client connection.");
-    #endif
 }
 
 //Parse raw headers to get path

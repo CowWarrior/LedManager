@@ -71,6 +71,8 @@ void setup() {
   _server.WServer.on("/info", HandleInfo);
   _server.WServer.on("/effect", HandleEffect);
 
+  //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
+
   _server.InitWebServer();
   
 
@@ -117,38 +119,38 @@ void HandleEffect()
   if (effect == "default")
   {
     SetLEDCurrentEffect("Default");
-    _server.PrintWebClientResponse("Effect set to: Default");
+    _server.SendResponse("Effect set to: Default");
   }
   else if (effect == "solid")
   {
     SetLEDCurrentEffect("Solid", color);
-    _server.PrintWebClientResponse("Effect set to: Solid (" + GetLEDCurrentEffectParameters() + ")");
+    _server.SendResponse("Effect set to: Solid (" + GetLEDCurrentEffectParameters() + ")");
   }
   else if (effect == "beat")
   {
     SetLEDCurrentEffect("Beat");
-    _server.PrintWebClientResponse("Effect set to: Beat");
+    _server.SendResponse("Effect set to: Beat");
   }
   else if (effect == "link")
   {
     SetLEDCurrentEffect("Link");
-    _server.PrintWebClientResponse("Effect set to: Link");
+    _server.SendResponse("Effect set to: Link");
   }
   else if (effect == "rainbow")
   {
     SetLEDCurrentEffect("Rainbow");
-    _server.PrintWebClientResponse("Effect set to: Rainbow");
+    _server.SendResponse("Effect set to: Rainbow");
   }
   else if (effect == "image")
   {
     //String p = _server.GetRequestHeaders();
     //_server.PrintWebClientResponse("Image:" + p);
-    _server.PrintWebClientResponse("Image Effect NOT IMPLEMENTED !!");
+    _server.SendResponse("Image Effect NOT IMPLEMENTED !!");
   }    
   else
   {
       //sometimes you just want to adjust brightness or color, dont change anything
-      _server.PrintWebClientResponse("OK");
+      _server.SendResponse("OK");
   }
 
   //adjust brightness if required
@@ -164,7 +166,7 @@ void HandleMainPage()
     BlinkBoardData();
     
     //Send the main page fille
-  _server.PrintFileWebClientResponse("/index.htm");
+  _server.SendFileResponse("/index.htm");
 }
 
 //Redirect to main page
@@ -184,7 +186,7 @@ void HandleNotFound()
   BlinkBoardData();
   
   //Send the default Page Not Found file.
-  _server.PrintFileWebClientNotFound("/err404.htm");
+  _server.SendFileNotFound("/err404.htm");
 }
 
 //Serve Info Page
@@ -215,6 +217,6 @@ void HandleInfo()
                     "</p></html>";
   
   //send response
-  _server.PrintWebClientResponse(response);
+  _server.SendResponse(response);
 }
 
