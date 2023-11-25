@@ -167,11 +167,23 @@ void MiniServ::SendResponse(String htmlBody)
     WServer.send(200, "text/html", htmlBody);
 }
 
+//Sends an HTML response to the Web Client, with specific response code and content type
+void MiniServ::SendResponse(String htmlBody, int responseCode, String contentType)
+{
+    WServer.send(responseCode, contentType, htmlBody);
+}
+
 //Sends a file to the Web Client
 void MiniServ::SendFileResponse(const char *filePath)
 {
     //Write body
     SendResponse(ReadFile(filePath));
+}
+
+//sends a file to the Web Client, with specific response code and content type
+void MiniServ::SendFileResponse(const char *filePath, int responseCode, String contentType)
+{
+    WServer.send(responseCode, contentType, ReadFile(filePath));
 }
 
 //Sends a 404 Not Found to the Web Client, optionally with a body
@@ -265,6 +277,96 @@ String MiniServ::ReadFile(const char *filePath)
 
     return ret;
 }
+
+void MiniServ::SaveFileUpload()
+{
+    SaveFileUploadAs("");
+}
+
+//Saves an uploaded file to the file system
+void MiniServ::SaveFileUploadAs(String filePath)
+{
+  HTTPUpload& upload = WServer.upload();
+
+  String fileName = "";
+
+  if (filePath == "")
+  {
+    fileName = "/" + upload.filename;
+  }
+  else
+  {
+    fileName = filePath;
+  }
+
+  if (upload.status == UPLOAD_FILE_START) {
+    //Start of the upload process
+    if(!SPIFFS.begin(true))
+    {
+        #ifdef MINISERV_DEBUGMODE
+            if (Serial)
+                Serial.println("An Error has occurred while mounting SPIFFS");
+        #endif        
+    }
+    else
+    {
+        //delete file if already exists
+        if (SPIFFS.exists(fileName))
+        {
+            SPIFFS.remove(fileName);
+
+            #ifdef MINISERV_DEBUGMODE
+                if (Serial)
+                {
+                    Serial.print("Deleted file: ");
+                    Serial.println(fileName);
+                }
+            #endif
+        }
+
+        //create file
+        uploadFile = SPIFFS.open(fileName, FILE_WRITE);
+        #ifdef MINISERV_DEBUGMODE
+            if (Serial)
+            {
+                Serial.print("Created file: ");
+                Serial.println(fileName);
+            }
+        #endif        
+    }
+    
+  } else if (upload.status == UPLOAD_FILE_WRITE) {
+    if (uploadFile) 
+    {
+        uploadFile.write(upload.buf, upload.currentSize);
+
+        #ifdef MINISERV_DEBUGMODE
+            if (Serial)
+            {
+                Serial.print("Wrote ");
+                Serial.print(upload.currentSize);
+                Serial.println("bytes to file.");                
+            }
+        #endif
+    }
+
+  } else if (upload.status == UPLOAD_FILE_END) {
+    if (uploadFile) 
+    {
+        uploadFile.close();
+
+        if (Serial)
+        {
+            Serial.print("Upload complete!");
+            Serial.print(fileName);
+            Serial.print(", ");
+            Serial.print(upload.totalSize);
+            Serial.println("bytes.");                
+        }
+    }
+  }    
+}
+
 
 //Read request headers from client
 // String MiniServ::ReadRawRequestHeader()

@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <WebServer.h>
+#include <SPIFFS.h>
 
 // Toggle Debug Mode here
 #define MINISERV_DEBUGMODE 1
@@ -50,8 +51,14 @@ public:
     //Sends an HTML response to the Web Client
     void SendResponse(String htmlBody);
 
+    //Sends an HTML response to the Web Client
+    void SendResponse(String htmlBody, int responseCode, String contentType);
+
     //Sends a file to the Web Client
     void SendFileResponse(const char *filePath);
+
+    //Sends a file to the Web Client
+    void SendFileResponse(const char *filePath, int responseCode, String contentType);
 
     //Sends a 404 Not Found to the Web Client, optionally with a body
     void SendNotFound(String htmlBody="");
@@ -59,12 +66,19 @@ public:
     //Sends a 404 Not Found to the Web Client and the content of a file in body.
     void SendFileNotFound(const char *filePath);
 
+    //Saves an uploaded file to the file system
+    void SaveFileUpload();
+
+    //Saves an uploaded file to the file system as a specific name
+    void SaveFileUploadAs(String filePath);
+
 private:
     String _SSID="";
     String _password="";
     int _port=80;
     int _clientTimeout=2000;
     bool _isWiFiConnected = false;
+    File uploadFile;
     
     //Reads the contents of a file as a string
     String ReadFile(const char *filePath);
