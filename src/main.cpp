@@ -110,6 +110,8 @@ void HandleEffect()
   color.toUpperCase();
   String brightness = _server.GetQueryStringParameter("brightness");
   brightness.toUpperCase();
+  String imgdata = _server.GetQueryStringParameter("imgdata");
+  imgdata.toUpperCase();
 
   #ifdef DEBUG_MODE
   PrintlnSerial("effect:" + effect);
@@ -145,9 +147,8 @@ void HandleEffect()
   }
   else if (effect == "image")
   {
-    //String p = _server.GetRequestHeaders();
-    //_server.PrintWebClientResponse("Image:" + p);
-    _server.SendResponse("Image Effect NOT IMPLEMENTED !!");
+    SetLEDCurrentEffect("Image", imgdata);
+    _server.SendResponse("Effect set to: Image");
   }    
   else
   {
