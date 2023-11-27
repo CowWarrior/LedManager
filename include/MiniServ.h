@@ -60,6 +60,12 @@ public:
     //Sends a file to the Web Client
     void SendFileResponse(const char *filePath, int responseCode, String contentType);
 
+    //Sends a binary file to the Web Client
+    void SendBinaryFileResponse(const char *filePath);
+
+    //Sends a binary file to the Web Client
+    void SendBinaryFileResponse(const char *filePath, int responseCode, String contentType);
+
     //Sends a 404 Not Found to the Web Client, optionally with a body
     void SendNotFound(String htmlBody="");
 
@@ -88,6 +94,9 @@ private:
 
     //Parse raw headers to get verb
     String ParseRequestHeaderVerb(String headers);
+
+    //Get content type based on file extension
+    String GetContentType(String filePath);
 
     //Read request headers from client
     //String ReadRawRequestHeader();

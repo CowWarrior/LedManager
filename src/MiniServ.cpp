@@ -193,6 +193,58 @@ void MiniServ::SendNotFound(String htmlBody)
     WServer.send(404, "text/html", htmlBody);
 }
 
+//Sends a binary file to the Web Client
+void MiniServ::SendBinaryFileResponse(const char *filePath)
+{
+    SendBinaryFileResponse(filePath, 200, GetContentType(filePath));
+}
+
+//Sends a binary file to the Web Client
+void MiniServ::SendBinaryFileResponse(const char *filePath, int responseCode, String contentType)
+{
+    if(!SPIFFS.begin(true)){
+        #ifdef MINISERV_DEBUGMODE
+            if (Serial)
+                Serial.println("An Error has occurred while mounting SPIFFS");
+        #endif        
+    }
+    else
+    {    
+        //open file
+        File file = SPIFFS.open(filePath);
+
+        if(!file){
+            #ifdef MINISERV_DEBUGMODE
+                if (Serial)
+                {
+                    Serial.print("Unable to to open file "); 
+                    Serial.println(filePath);
+                }
+            #endif    
+        }
+        else
+        {
+            //write content
+            if(file.available())
+            {                
+                WServer.streamFile(file, contentType);
+            }
+
+            //close file
+            file.close();
+
+            #ifdef MINISERV_DEBUGMODE
+                if (Serial)
+                {
+                    Serial.print("File read: ");
+                    Serial.println(filePath);
+                }
+            #endif                
+        }
+    }
+}
+
+
 //Gets the value of a uery string parameter by name
 String MiniServ::GetQueryStringParameter(String paramName)
 {
@@ -367,6 +419,35 @@ void MiniServ::SaveFileUploadAs(String filePath)
   }    
 }
 
+//Get content type based on file extension
+String MiniServ::GetContentType(String filePath) {
+  if (filePath.endsWith(".htm")) {
+    return "text/html";
+  } else if (filePath.endsWith(".html")) {
+    return "text/html";
+  } else if (filePath.endsWith(".css")) {
+    return "text/css";
+  } else if (filePath.endsWith(".js")) {
+    return "application/javascript";
+  } else if (filePath.endsWith(".png")) {
+    return "image/png";
+  } else if (filePath.endsWith(".gif")) {
+    return "image/gif";
+  } else if (filePath.endsWith(".jpg")) {
+    return "image/jpeg";
+  } else if (filePath.endsWith(".ico")) {
+    return "image/x-icon";
+  } else if (filePath.endsWith(".xml")) {
+    return "text/xml";
+  } else if (filePath.endsWith(".pdf")) {
+    return "application/x-pdf";
+  } else if (filePath.endsWith(".zip")) {
+    return "application/x-zip";
+  } else if (filePath.endsWith(".gz")) {
+    return "application/x-gzip";
+  } else
+    return "text/plain";
+}
 
 //Read request headers from client
 // String MiniServ::ReadRawRequestHeader()
