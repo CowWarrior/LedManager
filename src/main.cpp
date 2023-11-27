@@ -71,7 +71,7 @@ void setup() {
   _server.WServer.onNotFound(HandleNotFound);
   _server.WServer.on("/info", HandleInfo);
   _server.WServer.on("/effect", HandleEffect);
-  _server.WServer.on("/favicon.svg", HandleFavIcon);
+  _server.WServer.on("/favicon.ico", HandleFavIcon);
 
 
   //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
@@ -225,6 +225,7 @@ void HandleInfo()
 //Favorite icon
 void HandleFavIcon()
 {
-  _server.SendFileResponse("/favicon.svg", 200, "image/svg+xml");
+  //_server.SendFileResponse("/favicon.svg", 200, "image/svg+xml");
+  _server.SendBinaryFileResponse("/favicon.ico");
 }
 
