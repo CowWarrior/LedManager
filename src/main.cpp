@@ -51,6 +51,10 @@ void HandleMainPage();
 void RedirectMainPage();
 void HandleInfo();
 void HandleFavIcon();
+void HandleListImages();
+void HandleUploadImage();
+void HandleDownloadImage();
+void HandleDeleteImage();
 
 void setup() {
   //initialize pins
@@ -72,6 +76,11 @@ void setup() {
   _server.WServer.on("/info", HandleInfo);
   _server.WServer.on("/effect", HandleEffect);
   _server.WServer.on("/favicon.ico", HandleFavIcon);
+  _server.WServer.on("/images", HandleListImages);
+  _server.WServer.on("/image", HTTP_PUT, HandleUploadImage);
+  _server.WServer.on("/image", HTTP_GET, HandleDownloadImage);
+  _server.WServer.on("/image", HTTP_DELETE, HandleDeleteImage);
+
 
 
   //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
@@ -112,6 +121,8 @@ void HandleEffect()
   brightness.toUpperCase();
   String imgdata = _server.GetQueryStringParameter("imgdata");
   imgdata.toUpperCase();
+  String imgname = _server.GetQueryStringParameter("imgname");
+  
 
   #ifdef DEBUG_MODE
   PrintlnSerial("effect:" + effect);
@@ -228,5 +239,152 @@ void HandleFavIcon()
 {
   //_server.SendFileResponse("/favicon.svg", 200, "image/svg+xml");
   _server.SendBinaryFileResponse("/favicon.ico");
+}
+
+void HandleListImages()
+{
+  String imgListJson = "{\"FilesList\":[";
+  bool firstFile = true;
+
+  if(!SPIFFS.begin(true))
+  {
+      #ifdef MINISERV_DEBUGMODE
+          if (Serial)
+              Serial.println("An Error has occurred while mounting SPIFFS");
+      #endif        
+  }
+  else
+  {
+      //iterate through files      
+      File root = SPIFFS.open("/");    
+      String fileName = root.getNextFileName();
+    
+      while(fileName != ""){
+          #ifdef MINISERV_DEBUGMODE
+              if (Serial)
+              {
+                Serial.print("ENUM FILE: ");
+                Serial.println(fileName);
+              }
+          #endif
+
+          //add to array if proper extension
+          if (fileName.endsWith(".dat"))
+          {
+            if (firstFile)
+              imgListJson += "\"" + fileName + "\"";
+            else
+              imgListJson += ", \"" + fileName + "\"";
+
+            firstFile = false;
+          }
+    
+          fileName = root.getNextFileName();
+      }
+  }  
+
+  imgListJson += "]}";
+
+  //return JSON list
+  _server.SendResponse(imgListJson, 200, "application/json");
+}
+
+void HandleUploadImage()
+{
+  String fileName =  _server.GetQueryStringParameter("imgname");
+  String fileData = _server.GetQueryStringParameter("imgdata");
+  fileData.toUpperCase();
+
+  if(!SPIFFS.begin(true))
+  {
+      #ifdef MINISERV_DEBUGMODE
+          if (Serial)
+              Serial.println("An Error has occurred while mounting SPIFFS");
+      #endif        
+  }
+  else
+  {
+      //delete file if already exists
+      if (SPIFFS.exists(fileName))
+      {
+          SPIFFS.remove(fileName);
+
+          #ifdef MINISERV_DEBUGMODE
+              if (Serial)
+              {
+                  Serial.print("Deleted file: ");
+                  Serial.println(fileName);
+              }
+          #endif
+      }
+
+      //create file
+      File uploadFile = SPIFFS.open(fileName, FILE_WRITE);
+      #ifdef MINISERV_DEBUGMODE
+          if (Serial)
+          {
+              Serial.print("Created file: ");
+              Serial.println(fileName);
+          }
+      #endif
+
+      //Write to file
+      uploadFile.print(fileData);
+      uploadFile.flush();
+      uploadFile.close();
+
+      #ifdef MINISERV_DEBUGMODE
+          if (Serial)
+          {
+              Serial.print("Wrote ");
+              int l = fileData.length();
+              Serial.print(l * 8);
+              Serial.println("bytes to file.");                
+          }
+      #endif
+  }
+
+}
+
+void HandleDownloadImage()
+{  
+  String fileName =  _server.GetQueryStringParameter("imgname");
+  
+  //convert to char array
+  int l = fileName.length() + 1;
+  char fName[l];  
+  fileName.toCharArray(fName, l);
+  const char* fn = fName;
+
+  _server.SendFileResponse(fName);
+}
+
+void HandleDeleteImage()
+{
+  String fileName =  _server.GetQueryStringParameter("imgname");
+
+  if(!SPIFFS.begin(true))
+  {
+      #ifdef MINISERV_DEBUGMODE
+          if (Serial)
+              Serial.println("An Error has occurred while mounting SPIFFS");
+      #endif        
+  }
+  else
+  {
+      //delete file if it exists
+      if (SPIFFS.exists(fileName))
+      {
+          SPIFFS.remove(fileName);
+
+          #ifdef MINISERV_DEBUGMODE
+              if (Serial)
+              {
+                  Serial.print("Deleted file: ");
+                  Serial.println(fileName);
+              }
+          #endif
+      }
+  }
 }
 
