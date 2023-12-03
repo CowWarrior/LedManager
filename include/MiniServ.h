@@ -86,9 +86,6 @@ private:
     bool _isWiFiConnected = false;
     File uploadFile;
     
-    //Reads the contents of a file as a string
-    String ReadFile(const char *filePath);
-
     //Parse raw headers to get path
     String ParseRequestHeaderPath(String headers);
 

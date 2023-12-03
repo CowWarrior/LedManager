@@ -13,6 +13,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <SPIFFS.h>
+#include <fileutils.h>
 #include <WebServer.h>
 #include <MiniServ.h>
 
@@ -183,7 +184,7 @@ void MiniServ::SendFileResponse(const char *filePath)
 //sends a file to the Web Client, with specific response code and content type
 void MiniServ::SendFileResponse(const char *filePath, int responseCode, String contentType)
 {
-    WServer.send(responseCode, contentType, ReadFile(filePath));
+    WServer.send(responseCode, contentType, FSReadFile(filePath));
 }
 
 //Sends a 404 Not Found to the Web Client, optionally with a body
@@ -261,7 +262,7 @@ String MiniServ::GetQueryStringParameter(int paramIndex)
 void MiniServ::SendFileNotFound(const char *filePath)
 {
     //Write body
-    WServer.send(404, "text/html", ReadFile(filePath));
+    WServer.send(404, "text/html", FSReadFile(filePath));
 }
 
 //Parse raw headers to get path
@@ -279,55 +280,6 @@ String MiniServ::ParseRequestHeaderVerb(String headers)
 {
     //verb should be first characters before space
     return headers.substring(0, headers.indexOf(" "));
-}
-
-//Reads the contents of a file as a string
-String MiniServ::ReadFile(const char *filePath)
-{
-    String ret = "";
-
-    if(!SPIFFS.begin(true)){
-        #ifdef MINISERV_DEBUGMODE
-            if (Serial)
-                Serial.println("An Error has occurred while mounting SPIFFS");
-        #endif        
-    }
-    else
-    {    
-        //open file
-        File file = SPIFFS.open(filePath);
-
-        if(!file){
-            #ifdef MINISERV_DEBUGMODE
-                if (Serial)
-                {
-                    Serial.print("Unable to to open file "); 
-                    Serial.println(filePath);
-                }
-            #endif    
-        }
-        else
-        {
-            //write content
-            if(file.available())
-            {
-                ret = file.readString();
-            }
-
-            //close file
-            file.close();
-
-            #ifdef MINISERV_DEBUGMODE
-                if (Serial)
-                {
-                    Serial.print("File read: ");
-                    Serial.println(filePath);
-                }
-            #endif                
-        }
-    }
-
-    return ret;
 }
 
 void MiniServ::SaveFileUpload()
