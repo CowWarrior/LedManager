@@ -251,7 +251,9 @@ void HandleListImages()
       #ifdef MINISERV_DEBUGMODE
           if (Serial)
               Serial.println("An Error has occurred while mounting SPIFFS");
-      #endif        
+      #endif
+
+      _server.SendResponse("Error listing files.", 500, "text/plain"); 
   }
   else
   {
@@ -291,7 +293,7 @@ void HandleListImages()
 
 void HandleUploadImage()
 {
-  String fileName =  _server.GetQueryStringParameter("imgname");
+  String fileName = "/" +  _server.GetQueryStringParameter("imgname") + ".dat";
   String fileData = _server.GetQueryStringParameter("imgdata");
   fileData.toUpperCase();
 
@@ -300,7 +302,9 @@ void HandleUploadImage()
       #ifdef MINISERV_DEBUGMODE
           if (Serial)
               Serial.println("An Error has occurred while mounting SPIFFS");
-      #endif        
+      #endif
+
+      _server.SendResponse("Error creating" + fileName, 500, "text/plain");
   }
   else
   {
@@ -331,24 +335,27 @@ void HandleUploadImage()
       //Write to file
       uploadFile.print(fileData);
       uploadFile.flush();
+      int fileSize = uploadFile.size();
       uploadFile.close();
+
+      String output = "Wrote " + String(fileSize) + "bytes to " + fileName + ".";
 
       #ifdef MINISERV_DEBUGMODE
           if (Serial)
           {
-              Serial.print("Wrote ");
-              int l = fileData.length();
-              Serial.print(l * 8);
-              Serial.println("bytes to file.");                
+              Serial.println(output);
           }
       #endif
+
+      //return info to client
+      _server.SendResponse(output);
   }
 
 }
 
 void HandleDownloadImage()
 {  
-  String fileName =  _server.GetQueryStringParameter("imgname");
+  String fileName = "/" +  _server.GetQueryStringParameter("imgname") + ".dat";
   
   //convert to char array
   int l = fileName.length() + 1;
@@ -361,30 +368,36 @@ void HandleDownloadImage()
 
 void HandleDeleteImage()
 {
-  String fileName =  _server.GetQueryStringParameter("imgname");
+  String fileName = "/" +  _server.GetQueryStringParameter("imgname") + ".dat";
 
   if(!SPIFFS.begin(true))
   {
       #ifdef MINISERV_DEBUGMODE
           if (Serial)
               Serial.println("An Error has occurred while mounting SPIFFS");
-      #endif        
+      #endif
+
+      _server.SendResponse("Error deleting" + fileName, 500, "text/plain");
   }
   else
   {
+      String output = "Deleted " + fileName + ".";
+
       //delete file if it exists
       if (SPIFFS.exists(fileName))
       {
-          SPIFFS.remove(fileName);
+          SPIFFS.remove(fileName);          
 
           #ifdef MINISERV_DEBUGMODE
               if (Serial)
               {
-                  Serial.print("Deleted file: ");
-                  Serial.println(fileName);
+                  Serial.println(output);
               }
           #endif
       }
+
+      //always say it's been deleted, we dont want to give more info if it does not exist.
+      _server.SendResponse(output);
   }
 }
 
