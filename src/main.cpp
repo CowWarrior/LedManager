@@ -279,10 +279,15 @@ void HandleListImages()
             //add to array if proper extension
             if (fileName.endsWith(IMAGE_EXT))
             {
+              String cleanFileName = String(fileName);
+              cleanFileName.replace(IMAGE_DIR, "");
+              cleanFileName.replace(IMAGE_EXT, "");
+
+
               if (firstFile)
-                imgListJson += "\"" + fileName + "\"";
+                imgListJson += "\"" + cleanFileName + "\"";
               else
-                imgListJson += ", \"" + fileName + "\"";
+                imgListJson += ", \"" + cleanFileName + "\"";
 
               firstFile = false;
             }
