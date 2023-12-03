@@ -177,7 +177,7 @@ void MiniServ::SendResponse(String htmlBody, int responseCode, String contentTyp
 void MiniServ::SendFileResponse(const char *filePath)
 {
     //Write body
-    SendResponse(ReadFile(filePath));
+    SendFileResponse(filePath, 200, GetContentType(filePath));
 }
 
 //sends a file to the Web Client, with specific response code and content type
@@ -445,8 +445,10 @@ String MiniServ::GetContentType(String filePath) {
     return "application/x-zip";
   } else if (filePath.endsWith(".gz")) {
     return "application/x-gzip";
-  } else
+  } else if (filePath.endsWith(".txt")) {
     return "text/plain";
+  } else
+    return "application/octetstream";
 }
 
 //Read request headers from client

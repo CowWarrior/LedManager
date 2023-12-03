@@ -363,7 +363,7 @@ void HandleDownloadImage()
   fileName.toCharArray(fName, l);
   const char* fn = fName;
 
-  _server.SendFileResponse(fName);
+  _server.SendFileResponse(fName, 200, "text/plain");
 }
 
 void HandleDeleteImage()
