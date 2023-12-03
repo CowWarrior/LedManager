@@ -1,3 +1,6 @@
+#ifndef fastledutils_h
+#define fastledutils_h
+
 #include <Arduino.h>
 
 //Use the following definitions:
@@ -51,3 +54,5 @@ int GetLEDBrightness();
 
 //Draws the LED effect current frame - to be added to the main loop
 void DrawLEDFrame();
+
+#endif

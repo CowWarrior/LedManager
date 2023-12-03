@@ -1,3 +1,6 @@
+#ifndef arduinoutils_h
+#define arduinoutils_h
+
 #include <Arduino.h>
 
 //Use the following definitions:
@@ -37,3 +40,5 @@ int HexStrToInt(char str[]);
 
 //Converts a hexadecimal String to Integer
 int HexStrToInt(String str);
+
+#endif
