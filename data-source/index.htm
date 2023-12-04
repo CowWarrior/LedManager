@@ -46,13 +46,19 @@
               <div class="col-md-4">
                 <h2>Image</h2>
                 <p>
-                    Set the matrix to an image (<span id='w'>0</span>x<span id='h'>0</span>)
+                    Upload an image (<span id='w'>0</span>x<span id='h'>0</span>)
                     <input type='file' id="btnBrowse" />
                 </p>
                 <p>
                     <canvas id="cvsImage" width="32" height="32" />                   
                 </p>
-                <p><input type="button" value="Set Image" class="btn btn-default" id="btnImage" role="button" disabled /></p>
+                <p>
+                    <input type="text" value="" id="txtImageName" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]+" />
+                    <input type="button" value="Upload" class="btn btn-default" id="btnImage" role="button" disabled />
+                </p>
+                <p>
+                    <div id="txtInvalidImageName" class="alert alert-warning">The image name is invalid. It must contain only letters and numbers, and have from 3 to 24 characters.</div>
+                </p>
               </div>              
             </div>
             <hr>
@@ -80,9 +86,10 @@
                             getImageInfo(this);
                         }
                         img.src = e.target.result;
-                        $("#btnImage").prop("disabled", false);
+                        validateUploadForm();
                     }
                     reader.readAsDataURL(input.files[0]);
+                    $("#txtImageName").val(input.files[0].name.replace(".", "_"));
                 }
             }
             //get data from loaded image
@@ -91,6 +98,35 @@
                 context.drawImage(img, 0, 0);
                 $('#h').text(img.height);
                 $('#w').text(img.width);
+            }
+            //check if coonditions are valid to upload an image
+            function validateUploadForm() {
+                //get pattern of the text control               
+                var pattern = $("#txtImageName").attr('pattern');
+                var exp = new RegExp('^' + pattern + '$');
+
+                if (exp.test($("#txtImageName").val())){
+                    //text is valid, hide message
+                    $("#txtInvalidImageName").hide();
+
+                    if ($("#btnBrowse").val() != ""){
+                        //all valid
+                        $("#btnImage").prop("disabled", false);
+                    }
+                    else
+                    {
+                        //no file selected
+                        $("#btnImage").prop("disabled", true);
+                    }
+                }
+                else
+                {
+                    //text is not valid, show message, disable upload.
+                    $("#btnImage").prop("disabled", true);
+                    $("#txtInvalidImageName").show();
+                }
+
+
             }
 
 
@@ -125,17 +161,29 @@
                 $("#btnBrowse").change(function(){
                     readURL(this);
                 });
+                //Image name
+                $("#txtImageName").change(function(){
+                    validateUploadForm();
+                });
                 //Send Image command
                 $("#btnImage").on("click", function() {
-                    //https://stackoverflow.com/questions/19959072/sending-binary-data-in-javascript-over-http
                     var context = document.getElementById("cvsImage").getContext('2d');
                     var bytesArray = new Uint8Array(context.getImageData(0, 0, 15, 15).data);
-                    var loc = "./effect/image/";
+                    var imageName = $("#txtImageName").val(); 
+                    var imageData = "";                    
+
+                    //encode raw data into HEX values
+                    for (i=0; i<bytesArray.length; i++)
+                    {
+                        imageData += bytesArray[i].toString(16);
+                    }
+
+                    //stick values in query string
+                    var loc = "./image?imgname=" + imageName + "&imgdata=" + imageData;
+
                     $.ajax({
                         url: loc,
-                        type: 'POST',
-                        contentType: 'application/octet-stream',  
-                        data: bytesArray,
+                        type: 'PUT',
                         processData: false
                     });
                 });

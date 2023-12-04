@@ -165,7 +165,7 @@ void HandleEffect()
     }
     else if (effect == "image")
     {
-        SetLEDCurrentEffect("Image", imgdata);
+        SetLEDCurrentEffect("Image", FSReadFile(IMAGE_DIR + imgname + IMAGE_EXT));
         _server.SendResponse("Effect set to: Image");
     }    
     else
