@@ -31,7 +31,7 @@
                     </select>
                     <input id="colSolid" type="color" />
                 </p>
-                <p><a class="btn btn-default" id="btnEffect" href="#" role="button">Set Effect</a></p>
+                <p><a class="btn btn-primary" id="btnEffect" href="#" role="button">Set Effect</a></p>
               </div>
               <div class="col-md-4">
                 <h2>Brightness</h2>
@@ -46,7 +46,12 @@
               <div class="col-md-4">
                 <h2>Image</h2>
                 <p>
-                    Upload an image (<span id='w'>0</span>x<span id='h'>0</span>)
+                    Delete an existing image
+                    <select id="cbxImageDelete"></select>
+                    <input type="button" value="Delete" class="btn btn-danger" id="btnDeleteImage" role="button" disabled />
+                </p>
+                <p>
+                    Upload a new image (<span id='w'>0</span>x<span id='h'>0</span>)
                     <input type='file' id="btnBrowse" />
                 </p>
                 <p>
@@ -54,7 +59,7 @@
                 </p>
                 <p>
                     <input type="text" value="" id="txtImageName" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]+" />
-                    <input type="button" value="Upload" class="btn btn-default" id="btnImage" role="button" disabled />
+                    <input type="button" value="Upload" class="btn btn-success" id="btnImage" role="button" disabled />
                 </p>
                 <p>
                     <div id="txtInvalidImageName" class="alert alert-warning">The image name is invalid. It must contain only letters and numbers, and have from 3 to 24 characters.</div>
@@ -99,7 +104,29 @@
                 $('#h').text(img.height);
                 $('#w').text(img.width);
             }
-            //check if coonditions are valid to upload an image
+            //get image list from server
+            function getImageList() {
+                var loc = "./images";
+                $.ajax({
+                    url: loc,
+                    success : function(data) {              
+                        console.log(data);
+                        var arrayList = data.FilesList;
+                        
+                        if (arrayList) {
+                            //clear list
+                            $("#cbxImageDelete").html("");
+                            for (var i=0; i<arrayList.length; i++)
+                            {
+                                //add file to list
+                                $("#cbxImageDelete").append('<option value="' + arrayList[i] + '">' + arrayList[i] + '</option>');
+                            }
+                        }
+                        
+                    }
+                });
+            }
+            //check if conditions are valid to upload an image
             function validateUploadForm() {
                 //get pattern of the text control               
                 var pattern = $("#txtImageName").attr('pattern');
@@ -128,8 +155,6 @@
 
 
             }
-
-
             //ready
             $(function() {
                 //Send Effect command
@@ -187,6 +212,9 @@
                         processData: false
                     });
                 });
+
+                //load lists
+                getImageList();
             });
         </script>
     </body>
