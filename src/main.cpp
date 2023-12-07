@@ -187,7 +187,7 @@ void HandleMainPage()
     BlinkBoardData();
     
     //Send the main page fille
-    _server.SendFileResponse("/index.htm");
+    _server.SendFileResponse("/www/index.htm");
 }
 
 //Redirect to main page
@@ -207,7 +207,7 @@ void HandleNotFound()
     BlinkBoardData();
     
     //Send the default Page Not Found file.
-    _server.SendFileNotFound("/err404.htm");
+    _server.SendFileNotFound("/www/err404.htm");
 }
 
 //Serve Info Page
@@ -244,7 +244,7 @@ void HandleInfo()
 //Favorite icon
 void HandleFavIcon()
 {
-    _server.SendBinaryFileResponse("/favicon.ico");
+    _server.SendBinaryFileResponse("/www/favicon.ico");
 }
 
 void HandleListImages()
