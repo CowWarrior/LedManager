@@ -59,7 +59,7 @@
                 </p>
                 <p>
                     <input type="text" value="" id="txtImageName" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]+" />
-                    <input type="button" value="Upload" class="btn btn-success" id="btnImage" role="button" disabled />
+                    <input type="button" value="Upload" class="btn btn-success" id="btnUploadImage" role="button" disabled />
                 </p>
                 <p>
                     <div id="txtInvalidImageName" class="alert alert-warning">The image name is invalid. It must contain only letters and numbers, and have from 3 to 24 characters.</div>
@@ -116,6 +116,9 @@
                         if (arrayList) {
                             //clear list
                             $("#cbxImageDelete").html("");
+                            //add blank item first
+                            $("#cbxImageDelete").append('<option value="" default></option>');
+                            //add each item from the array
                             for (var i=0; i<arrayList.length; i++)
                             {
                                 //add file to list
@@ -124,6 +127,28 @@
                         }
                         
                     }
+                });
+            }
+            function uploadImage() {
+                var context = document.getElementById("cvsImage").getContext('2d');
+                var bytesArray = new Uint8Array(context.getImageData(0, 0, 15, 15).data);
+                var imageName = $("#txtImageName").val();
+                var imageData = "";                    
+
+                //encode raw data into HEX values
+                for (i=0; i<bytesArray.length; i++)
+                {
+                    imageData += bytesArray[i].toString(16);
+                }
+
+                //stick values in query string
+                var loc = "./image?imgname=" + imageName + "&imgdata=" + imageData;
+
+                $.ajax({
+                    url: loc,
+                    type: 'PUT',
+                    processData: false,
+                    success: function () { refreshForms(); }
                 });
             }
             //check if conditions are valid to upload an image
@@ -138,22 +163,31 @@
 
                     if ($("#btnBrowse").val() != ""){
                         //all valid
-                        $("#btnImage").prop("disabled", false);
+                        $("#btnUploadImage").prop("disabled", false);
                     }
                     else
                     {
                         //no file selected
-                        $("#btnImage").prop("disabled", true);
+                        $("#btnUploadImage").prop("disabled", true);
                     }
                 }
                 else
                 {
                     //text is not valid, show message, disable upload.
-                    $("#btnImage").prop("disabled", true);
+                    $("#btnUploadImage").prop("disabled", true);
                     $("#txtInvalidImageName").show();
                 }
+            }
+            function refreshForms() {
+                //update lists
+                getImageList();
+                //Clear upload text
+                $("#txtImageName").val("");
+                //Clear file selected
+                $("#btnBrowse").val("");
 
-
+                //apply form validation to reset status of buttons
+                validateUploadForm();
             }
             //ready
             $(function() {
@@ -191,30 +225,38 @@
                     validateUploadForm();
                 });
                 //Send Image command
-                $("#btnImage").on("click", function() {
-                    var context = document.getElementById("cvsImage").getContext('2d');
-                    var bytesArray = new Uint8Array(context.getImageData(0, 0, 15, 15).data);
-                    var imageName = $("#txtImageName").val(); 
-                    var imageData = "";                    
-
-                    //encode raw data into HEX values
-                    for (i=0; i<bytesArray.length; i++)
+                $("#btnUploadImage").on("click", function() {
+                    uploadImage();
+                });
+                //Image to be deleted selected
+                $("#cbxImageDelete").change(function(){
+                    if ($("#cbxImageDelete").val() == "")
                     {
-                        imageData += bytesArray[i].toString(16);
+                        $("#btnDeleteImage").prop("disabled", true);
                     }
+                    else
+                    {
+                        $("#btnDeleteImage").prop("disabled", false);
+                    }
+                });
+                //Delete image button
+                $("#btnDeleteImage").on("click", function(){
+                    //get image name from drop-down
+                    var imageName = $("#cbxImageDelete").val(); 
 
                     //stick values in query string
-                    var loc = "./image?imgname=" + imageName + "&imgdata=" + imageData;
+                    var loc = "./image?imgname=" + imageName;
 
                     $.ajax({
                         url: loc,
-                        type: 'PUT',
-                        processData: false
+                        type: 'DELETE',
+                        processData: false,
+                        success: function () { refreshForms(); }
                     });
                 });
-
-                //load lists
-                getImageList();
+                
+                //get form ready
+                refreshForms();
             });
         </script>
     </body>
