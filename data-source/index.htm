@@ -27,9 +27,10 @@
                         <option value="default" selected>Default</option>
                         <option value="rainbow">Rainbow</option>
                         <option value="solid">Solid Color</option>
-                        <option value="link">Link</option>
+                        <option value="image">Image</option>
                     </select>
                     <input id="colSolid" type="color" />
+                    <select id="cbxImageEffect"></select>
                 </p>
                 <p><a class="btn btn-primary" id="btnEffect" href="#" role="button">Set Effect</a></p>
               </div>
@@ -116,13 +117,15 @@
                         if (arrayList) {
                             //clear list
                             $("#cbxImageDelete").html("");
-                            //add blank item first
+                            $("#cbxImageEffect").html("");
+                            //add blank item first (for delete only)
                             $("#cbxImageDelete").append('<option value="" default></option>');
                             //add each item from the array
                             for (var i=0; i<arrayList.length; i++)
                             {
                                 //add file to list
                                 $("#cbxImageDelete").append('<option value="' + arrayList[i] + '">' + arrayList[i] + '</option>');
+                                $("#cbxImageEffect").append('<option value="' + arrayList[i] + '">' + arrayList[i] + '</option>');
                             }
                         }
                         
@@ -194,11 +197,29 @@
                 //Send Effect command
                 $("#btnEffect").on("click", function() {
                     var loc = "./effect";
-                    var dat = {name: $("#cbxEffect").val(), color: $("#colSolid").val().replace("#", "")};
-                    $.ajax({
+                    var dat = {};
+
+                    //choose which parameters to send
+                    if ($("#cbxEffect").val() == "image")
+                        dat = {name: $("#cbxEffect").val(), imgname: $("#cbxImageEffect").val()};
+                    else if ($("#cbxEffect").val() == "solid")
+                        dat = {name: $("#cbxEffect").val(), color: $("#colSolid").val().replace("#", "")};
+                    else
+                        dat = {name: $("#cbxEffect").val()};                    
+                    
+                     $.ajax({
                         url: loc,
                         data: dat
                     });
+                });
+                $("#cbxEffect").change(function() {
+                    $("#colSolid").hide();
+                    $("#cbxImageEffect").hide();
+
+                    if ($("#cbxEffect").val() == "image")
+                        $("#cbxImageEffect").show();
+                    else if ($("#cbxEffect").val() == "solid")
+                        $("#colSolid").show();
                 });
                 //Send brightness command
                 $("#btnBrightness").on("click", function() {
@@ -209,7 +230,6 @@
                         url: loc,
                         data: dat
                     });
-
                 });
                 //Brightness UI feedback
                 $("#sldBrightness").on("input", function() {
