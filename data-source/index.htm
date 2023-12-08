@@ -111,7 +111,6 @@
                 $.ajax({
                     url: loc,
                     success : function(data) {              
-                        console.log(data);
                         var arrayList = data.FilesList;
                         
                         if (arrayList) {
@@ -134,18 +133,24 @@
             }
             function uploadImage() {
                 var context = document.getElementById("cvsImage").getContext('2d');
-                var bytesArray = new Uint8Array(context.getImageData(0, 0, 15, 15).data);
+                //get image data is 0 based (0,0), but second pair is width and height (16,16), not end index (15,15)
+                var bytesArray = new Uint8Array(context.getImageData(0, 0, 16, 16).data);
                 var imageName = $("#txtImageName").val();
                 var imageData = "";                    
 
                 //encode raw data into HEX values
-                for (i=0; i<bytesArray.length; i++)
+                for (i=0; i<bytesArray.length; i+=4)
                 {
-                    imageData += bytesArray[i].toString(16);
+                    var r = bytesArray[i+0];
+                    var g = bytesArray[i+1];
+                    var b = bytesArray[i+2];
+                    //we dont care about alpha depth
+                    //var a = bytesArray[i+3];
+                    imageData += toColor(r) + toColor(g) + toColor(b);
                 }
 
                 //stick values in query string
-                var loc = "./image?imgname=" + imageName + "&imgdata=" + imageData;
+                var loc = "./image?imgname=" + imageName + "&imgdata=" + imageData.toUpperCase();
 
                 $.ajax({
                     url: loc,
@@ -160,7 +165,7 @@
                 var pattern = $("#txtImageName").attr('pattern');
                 var exp = new RegExp('^' + pattern + '$');
 
-                if (exp.test($("#txtImageName").val())){
+                if (exp.test($("#txtImageName").val()) && $("#txtImageName").val().length > 2){
                     //text is valid, hide message
                     $("#txtInvalidImageName").hide();
 
@@ -178,7 +183,11 @@
                 {
                     //text is not valid, show message, disable upload.
                     $("#btnUploadImage").prop("disabled", true);
-                    $("#txtInvalidImageName").show();
+                    //only show message if text is actually entered
+                    if ($("#txtImageName").val().length > 0)
+                        $("#txtInvalidImageName").show();
+                    else
+                        $("#txtInvalidImageName").hide();
                 }
             }
             function refreshForms() {
@@ -188,9 +197,26 @@
                 $("#txtImageName").val("");
                 //Clear file selected
                 $("#btnBrowse").val("");
+                //Set default effect
+                updateEffectsControls();
 
                 //apply form validation to reset status of buttons
                 validateUploadForm();
+            }
+            function updateEffectsControls() {
+                $("#colSolid").hide();
+                $("#cbxImageEffect").hide();
+
+                if ($("#cbxEffect").val() == "image")
+                    $("#cbxImageEffect").show();
+                else if ($("#cbxEffect").val() == "solid")
+                    $("#colSolid").show();
+            }
+            function toColor(n) {
+                if (n<16)
+                    return "0" + n.toString(16);
+                else
+                    return n.toString(16);
             }
             //ready
             $(function() {
@@ -212,14 +238,8 @@
                         data: dat
                     });
                 });
-                $("#cbxEffect").change(function() {
-                    $("#colSolid").hide();
-                    $("#cbxImageEffect").hide();
-
-                    if ($("#cbxEffect").val() == "image")
-                        $("#cbxImageEffect").show();
-                    else if ($("#cbxEffect").val() == "solid")
-                        $("#colSolid").show();
+                $("#cbxEffect").change(function (){
+                    updateEffectsControls();
                 });
                 //Send brightness command
                 $("#btnBrightness").on("click", function() {
@@ -241,7 +261,7 @@
                     readURL(this);
                 });
                 //Image name
-                $("#txtImageName").change(function(){
+                $("#txtImageName").on("keyup", function(){
                     validateUploadForm();
                 });
                 //Send Image command
