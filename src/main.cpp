@@ -155,11 +155,6 @@ void HandleEffect()
         SetLEDCurrentEffect("Beat");
         _server.SendResponse("Effect set to: Beat");
     }
-    else if (effect == "link")
-    {
-        SetLEDCurrentEffect("Link");
-        _server.SendResponse("Effect set to: Link");
-    }
     else if (effect == "rainbow")
     {
         SetLEDCurrentEffect("Rainbow");
