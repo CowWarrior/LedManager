@@ -58,6 +58,7 @@ void HandleListImages();
 void HandleUploadImage();
 void HandleDownloadImage();
 void HandleDeleteImage();
+void HandleStorageInfo();
 
 void setup() {
     //initialize pins
@@ -83,6 +84,7 @@ void setup() {
     _server.WServer.on("/image", HTTP_PUT, HandleUploadImage);
     _server.WServer.on("/image", HTTP_GET, HandleDownloadImage);
     _server.WServer.on("/image", HTTP_DELETE, HandleDeleteImage);
+    _server.WServer.on("/storage", HandleStorageInfo);
 
 
 ///////////////////////////////////////////////////////
@@ -335,13 +337,20 @@ void HandleDownloadImage()
 {  
     String fileName = IMAGE_DIR +  _server.GetQueryStringParameter("imgname") + IMAGE_EXT;
     
-    //convert to char array
-    int l = fileName.length() + 1;
-    char fName[l];  
-    fileName.toCharArray(fName, l);
-    const char* fn = fName;
+    if (FSFileExists(fileName))
+    {
+        //convert to char array
+        int l = fileName.length() + 1;
+        char fName[l];  
+        fileName.toCharArray(fName, l);
+        const char* fn = fName;
 
-    _server.SendFileResponse(fName, 200, "text/plain");
+        _server.SendFileResponse(fName, 200, "text/plain");
+    }
+    else
+    {
+        _server.SendResponse("File not found.", 404, "text/plain");
+    }
 }
 
 void HandleDeleteImage()
@@ -367,3 +376,29 @@ void HandleDeleteImage()
 
 }
 
+void HandleStorageInfo()
+{
+    if (!SPIFFS.begin(true))
+    {
+        #ifdef DEBUGMODE
+            PrintlnSerial("An Error has occu rred while mounting SPIFFS");
+        #endif
+
+        _server.SendResponse("Error getting storage info.", 500, "text/plain"); 
+    }
+    else
+    {
+        int total = SPIFFS.totalBytes();
+        int used = SPIFFS.usedBytes();
+
+        #ifdef DEBUGMODE
+            PrintSerial("Total bytes: ");
+            PrintlnSerial(String(total));
+            PrintSerial("Used bytes: ");
+            PrintlnSerial(String(used));
+        #endif
+
+        String info = "{\"TotalBytes\":" + String(total) + ", \"UsedBytes\":" + String(used) + "}" ;
+        _server.SendResponse(info, 200, "application/json");
+    }   
+}
