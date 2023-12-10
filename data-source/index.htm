@@ -7,6 +7,8 @@
         <!-- Bootstrap Optional theme -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
         <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        <!--Bootstrap Icons-->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" integrity="sha384-4LISF5TTJX/fLmGSxO53rV4miRxdg84mZsxmO8Rx5jGtp/LbrixFETvWa5a6sESd" crossorigin="anonymous">
     </head>
     <body>
         <div class="jumbotron">
@@ -45,7 +47,11 @@
                 <p><a class="btn btn-default" id="btnBrightness" href="#" role="button">Set Brightness</a></p>
               </div>
               <div class="col-md-4">
-                <h2>Image</h2>
+                <h2>
+                    Images 
+                    <i class="bi bi-info-circle" title="<strong>Image specifications</strong>" data-toggle="popover" data-trigger="click" data-html="true" 
+                    data-content="<i class='bi bi-crop'></i> Use 16x16 images, 16M colors.<br/><i class='bi bi-file-earmark'></i> Avoid .webp, they have issues."></i>
+                </h2>
                 <p>
                     Delete an existing image
                     <select id="cbxImageDelete"></select>
@@ -64,6 +70,7 @@
                 </p>
                 <p>
                     <div id="txtInvalidImageName" class="alert alert-warning">The image name is invalid. It must contain only letters and numbers, and have from 3 to 24 characters.</div>
+                    <div id="txtUploadSuccess" class="alert alert-success"><strong>Success!</strong> File successfully uploaded.</div>
                 </p>
               </div>              
             </div>
@@ -156,7 +163,14 @@
                     url: loc,
                     type: 'PUT',
                     processData: false,
-                    success: function () { refreshForms(); }
+                    success: function () { 
+                        //clear forms
+                        refreshForms();
+                        //show success message
+                        $("#txtUploadSuccess").fadeIn("fast", function() {
+                            setTimeout(function () {$("#txtUploadSuccess").fadeOut("slow");}, 1500);
+                        });
+                    }
                 });
             }
             //check if conditions are valid to upload an image
@@ -199,9 +213,14 @@
                 $("#btnBrowse").val("");
                 //Set default effect
                 updateEffectsControls();
-
+                //clear upload message
+                $("#txtUploadSuccess").hide();
                 //apply form validation to reset status of buttons
                 validateUploadForm();
+                //clear the canvas
+                var canvas = document.getElementById("cvsImage");
+                var context = canvas.getContext('2d');
+                context.clearRect(0, 0, canvas.width, canvas.height);
             }
             function updateEffectsControls() {
                 $("#colSolid").hide();
@@ -295,6 +314,9 @@
                     });
                 });
                 
+                //enable popover
+                $('[data-toggle="popover"]').popover(); 
+
                 //get form ready
                 refreshForms();
             });
