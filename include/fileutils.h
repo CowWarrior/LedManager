@@ -15,4 +15,7 @@ int FSWriteFile(String filePath, String fileData);
 //Deletes a file, returns True if successful
 bool FSDeleteFile(String filePath);
 
+//Test if a file exists
+bool FSFileExists(String filePath);
+
 #endif

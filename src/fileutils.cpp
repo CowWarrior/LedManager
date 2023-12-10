@@ -154,3 +154,24 @@ bool FSDeleteFile(String filePath)
     return ret;
 }
 
+//Test if a file exists
+bool FSFileExists(String filePath)
+{
+    //assume operation will fail.
+    bool ret = false;
+
+    if(!SPIFFS.begin(true))
+    {
+        #ifdef FILEUTILS_DEBUGMODE
+            PrintlnSerial("An Error has occurred while mounting SPIFFS");
+        #endif
+        ret = false;
+    }
+    else
+    {
+        ret = SPIFFS.exists(filePath);
+    }
+
+    return ret;
+}
+
