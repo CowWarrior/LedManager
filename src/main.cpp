@@ -86,12 +86,6 @@ void setup() {
     _server.WServer.on("/image", HTTP_DELETE, HandleDeleteImage);
     _server.WServer.on("/storage", HandleStorageInfo);
 
-
-///////////////////////////////////////////////////////
-//                   DO THIS ONLY ONCE to cleanup original tests
-FSDeleteFile("/testimage.dat");
-//////////////////////////////////////////////////////
-
     //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
 
     _server.InitWebServer();
