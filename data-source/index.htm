@@ -39,10 +39,10 @@
               <div class="col-md-4">
                 <h2>Brightness</h2>
                 <p>
-                    Set brightness to : <span id="txtBrightness">64</span>
+                    Set brightness to : <span id="txtBrightness">64%</span>
                 </p>
                 <p>
-                    <input type="range" min="0" max="255" value="64" class="slider" id="sldBrightness">
+                    <input type="range" min="0" max="100" value="64" class="slider" id="sldBrightness">
                 </p>
                 <p><a class="btn btn-default" id="btnBrightness" href="#" role="button">Set Brightness</a></p>
               </div>
@@ -301,7 +301,9 @@
                 //Brightness UI feedback
                 $("#sldBrightness").on("input", function() {
                     var i = parseInt($("#sldBrightness").val());
-                    $("#txtBrightness").text(i.toString(16).toUpperCase());
+                    //$("#txtBrightness").text(i.toString(16).toUpperCase());
+                    //display in decimal instead with cap to 100 (%)
+                    $("#txtBrightness").text(i.toString() + "%");
                 });
                 //File select button
                 $("#btnBrowse").change(function(){
