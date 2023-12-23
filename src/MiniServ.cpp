@@ -34,14 +34,14 @@ MiniServ::MiniServ()
 }
 
 //Constructor with shortcut to init wifi
-MiniServ::MiniServ(String ssid, String password, int timeout_ms)
+MiniServ::MiniServ(String ssid, String password, int timeout_ms, String hostname)
 {
-    InitWiFi(ssid, password, timeout_ms);
+    InitWiFi(ssid, password, timeout_ms, hostname);
 }
 
 
 //initialize Wifi and attempt to connect
-void MiniServ::InitWiFi(String ssid, String password, int timeout_ms)
+void MiniServ::InitWiFi(String ssid, String password, int timeout_ms, String hostname)
 {
     _SSID = ssid;
     _password = password;
@@ -54,6 +54,9 @@ void MiniServ::InitWiFi(String ssid, String password, int timeout_ms)
         Serial.print(_SSID);
         Serial.print("... ");
     }
+
+    if (hostname!="")
+        WiFi.setHostname(hostname.c_str());
 
     WiFi.begin(_SSID, _password);
 
@@ -79,6 +82,7 @@ void MiniServ::InitWiFi(String ssid, String password, int timeout_ms)
 
         if (Serial)
         {
+            Serial.print(hostname);
             Serial.println(" Connected!");
 
             Serial.print("signal strength (RSSI): ");

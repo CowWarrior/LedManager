@@ -28,6 +28,8 @@
 #define BOARD_PIN_LED           2
 #define WIFI_SSIS               "Maze"
 #define WIFI_PWD                "MZZ8zbd9Vv8xtvrG9t38dKRX"
+#define WIFI_TIMEOUT            60000
+#define WIFI_HOSTNAME           "PIXELART"
 #define WIFIUTILS_SERVERPORT    80
 
 #define IMAGE_DIR               "/images/"
@@ -74,7 +76,7 @@ void setup() {
     InitSerial();
 
     //Initialize WiFi
-    _server.InitWiFi(WIFI_SSIS, WIFI_PWD);
+    _server.InitWiFi(WIFI_SSIS, WIFI_PWD, WIFI_TIMEOUT, WIFI_HOSTNAME);
 
     //Initialize Web Server
     _server.WServer.on("/", HandleMainPage);

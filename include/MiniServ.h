@@ -19,10 +19,10 @@ public:
     MiniServ();
 
     //shortcut to initialize Wifi on instantiate
-    MiniServ(String ssid, String password, int timeout_ms=60000);
+    MiniServ(String ssid, String password, int timeout_ms=60000, String hostname="");
 
     //initialize Wifi and attempt to connect
-    void InitWiFi(String ssid, String password, int timeout_ms=60000);
+    void InitWiFi(String ssid, String password, int timeout_ms=60000, String hostname="");
 
     //checks if the WiFi connection has been established
     bool IsWiFiConnected();
