@@ -14,6 +14,7 @@
 //
 // History:     2023-10-28    PP Laplante   Created
 //              2023-11-13    PP Laplante   Use new MiniServ web server
+//              2023-12-22    PP Laplante   Implemented Showcase
 //
 //
 //---------------------------------------------------------------------------
@@ -46,6 +47,10 @@
 
 //Global Variables
 MiniServ _server;
+bool _showcaseMode = true;
+int _showcaseImageIndex  = 0;
+unsigned long _showcaseDelayMs = 20000;
+unsigned long _showcasePreviousTime = millis() - _showcaseDelayMs - 1;
 
 //Prototyopes
 void HandleEffect();
@@ -59,6 +64,7 @@ void HandleUploadImage();
 void HandleDownloadImage();
 void HandleDeleteImage();
 void HandleStorageInfo();
+void HandleShowcase();
 
 void setup() {
     //initialize pins
@@ -93,7 +99,9 @@ void setup() {
 
     //Initialize LEDs
     InitLED();
-    SetLEDCurrentEffect("Default"); 
+    //SetLEDCurrentEffect("Default");
+    //default to showcase insted
+    _showcaseMode=true;
       
     //blink twice to indicate we are ready
     BlinkBoard(2, 250);
@@ -105,6 +113,9 @@ void setup() {
 void loop() {
     //Handle any web requests
     _server.HandleClientRequests();
+
+    //Handle showcase
+    HandleShowcase();
 
     //Handle LED display
     DrawLEDFrame();
@@ -141,24 +152,33 @@ void HandleEffect()
     }
     else if (effect == "solid")
     {
+        _showcaseMode=false;
         SetLEDCurrentEffect("Solid", color);
         _server.SendResponse("Effect set to: Solid (" + GetLEDCurrentEffectParameters() + ")");
     }
     else if (effect == "beat")
     {
+        _showcaseMode=false;
         SetLEDCurrentEffect("Beat");
         _server.SendResponse("Effect set to: Beat");
     }
     else if (effect == "rainbow")
     {
+        _showcaseMode=false;
         SetLEDCurrentEffect("Rainbow");
         _server.SendResponse("Effect set to: Rainbow");
     }
     else if (effect == "image")
     {
+        _showcaseMode=false;
         SetLEDCurrentEffect("Image", FSReadFile(IMAGE_DIR + imgname + IMAGE_EXT));
         _server.SendResponse("Effect set to: Image");
-    }    
+    }
+    else if (effect == "showcase")
+    {
+        _showcaseMode=true;
+        _server.SendResponse("OK");
+    }
     else
     {
         //sometimes you just want to adjust brightness or color, dont change anything
@@ -390,4 +410,76 @@ void HandleStorageInfo()
         String info = "{\"TotalBytes\":" + String(total) + ", \"UsedBytes\":" + String(used) + "}" ;
         _server.SendResponse(info, 200, "application/json");
     }   
+}
+
+String GetImageById(int imgID)
+{
+    int currentId = 0;
+
+    //iterate through files
+    if (!SPIFFS.begin(true))
+    {
+        #ifdef DEBUGMODE
+            PrintlnSerial("An error occured mounting SPIFFS");
+        #endif
+    }
+    else
+    {
+        File root = SPIFFS.open("/images"); //IT DOES NOT LIKE THE TRAILING "/"
+        String fileName = root.getNextFileName();
+        
+        while(fileName != ""){
+            //check if proper extension
+            if (fileName.endsWith(IMAGE_EXT))
+            {
+                if (imgID == currentId)
+                {
+                    #ifdef DEBUGMODE
+                        PrintlnSerial("Found image " + fileName + " at index " + String(currentId));
+                    #endif
+
+                    return fileName;
+                }
+                currentId++;
+            }
+        
+            fileName = root.getNextFileName();
+        }
+    }
+
+    //not found
+    return "";
+}
+
+void HandleShowcase()
+{
+    //check if we are in showcase mode
+    if (_showcaseMode)
+    {
+        //update current time
+        unsigned long showcaseCurrentTime = millis();
+
+        //check if it is time to change image
+        if (showcaseCurrentTime > _showcasePreviousTime + _showcaseDelayMs)
+        {
+            PrintlnSerial("Next image in showcase...");
+            String imgName = GetImageById(_showcaseImageIndex);
+
+            //cehck if we went too far
+            if (imgName == "")
+            {
+                //go-back to start
+                _showcaseImageIndex=0;
+                imgName = GetImageById(_showcaseImageIndex);
+            }
+
+            //update previous time
+            _showcasePreviousTime = showcaseCurrentTime;
+            //increment next image
+            _showcaseImageIndex++;
+
+            //display image
+            SetLEDCurrentEffect("Image", FSReadFile(imgName));
+        }
+    }
 }
