@@ -372,6 +372,8 @@ void DrawLEDImageEffect()
                 int intVal = HexStrToInt(hexVal);
                 frames[0][i][j] = intVal;
 
+                //too much details
+                /*
                 #ifdef FASTLEDUTILS_DEBUGMODE
                     if (Serial)
                     {
@@ -381,6 +383,7 @@ void DrawLEDImageEffect()
                         Serial.println(intVal);
                     }
                 #endif
+                */
 
                 //each color value is six bytes (ex: 0xBBEEFF)
                 kk += 6;
