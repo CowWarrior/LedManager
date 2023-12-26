@@ -26,12 +26,9 @@
 #define LED_MATRIX_INTERLACED   0
 #define LED_GPIO_PIN            13
 #define BOARD_PIN_LED           2
-#define WIFI_SSIS               "Maze"
-#define WIFI_PWD                "MZZ8zbd9Vv8xtvrG9t38dKRX"
-#define WIFI_TIMEOUT            60000
-#define WIFI_HOSTNAME           "PIXELART"
 #define WIFIUTILS_SERVERPORT    80
 
+#define CONFIG_FILE             "/config.json"
 #define IMAGE_DIR               "/images/"
 #define IMAGE_EXT               ".dat"
 
@@ -46,15 +43,29 @@
 #include <MiniServ.h>
 #include <fastledutils.h>
 #include <fileutils.h>
+#include <ArduinoJson.h>
+
+struct LedManagerConfiguration
+{
+    String  wifiSSID = "Maze";
+    String  wifiPassword = "MZZ8zbd9Vv8xtvrG9t38dKRX";
+    int     wifiTimeout = 60000;
+    String  wifiHostname = "PIXELART";
+};
+
 
 //Global Variables
 MiniServ _server;
 bool _showcaseMode = true;
+bool _configMode = false;
 int _showcaseImageIndex  = 0;
 unsigned long _showcaseDelayMs = 20000;
 unsigned long _showcasePreviousTime = millis() - _showcaseDelayMs - 1;
+LedManagerConfiguration _config;
 
 //Prototyopes
+bool ReadConfig();
+bool SaveConfig();
 void HandleEffect();
 void HandleNotFound();
 void HandleMainPage();
@@ -75,8 +86,17 @@ void setup() {
     //initialize serial port
     InitSerial();
 
+    //Read configuration
+    if (!ReadConfig())
+    {
+        #ifdef DEBUGMODE
+            PrintlnSerial("Unable to read configuration file!");
+        #endif
+        _configMode = true;
+    }
+
     //Initialize WiFi
-    _server.InitWiFi(WIFI_SSIS, WIFI_PWD, WIFI_TIMEOUT, WIFI_HOSTNAME);
+    _server.InitWiFi(_config.wifiSSID, _config.wifiPassword, _config.wifiTimeout, _config.wifiHostname);
 
     //Initialize Web Server
     _server.WServer.on("/", HandleMainPage);
@@ -484,4 +504,57 @@ void HandleShowcase()
             SetLEDCurrentEffect("Image", FSReadFile(imgName));
         }
     }
+}
+
+bool ReadConfig()
+{
+    //read config file
+    String conf = FSReadFile(CONFIG_FILE);
+
+    if (conf =="")
+        return false;
+    else
+    {
+        //deserialize config data
+        StaticJsonDocument<512> doc;
+        deserializeJson(doc, conf);
+
+        #ifdef DEBUGMODE
+            PrintlnSerial("Read config file:");
+            serializeJsonPretty(doc, Serial);
+        #endif
+
+        //load config data into global variable
+        _config.wifiHostname = doc["wifi"]["hostname"].as<String>();
+        _config.wifiPassword = doc["wifi"]["pwd"].as<String>();
+        _config.wifiSSID = doc["wifi"]["ssid"].as<String>();
+        _config.wifiTimeout = doc["wifi"]["timeout"];
+
+        return true;
+    }
+}
+
+bool SaveConfig()
+{
+    String conf = "";
+    StaticJsonDocument<512> doc;
+
+    //create JSON document form global variable
+    doc["wifi"]["hostname"] = _config.wifiHostname;
+    doc["wifi"]["pwd"] = _config.wifiPassword;
+    doc["wifi"]["ssid"] = _config.wifiSSID;
+    doc["wifi"]["timeout"] = _config.wifiTimeout;
+
+    //serialize data
+    serializeJson(doc, conf);
+
+    //write config to file
+    int ret = FSWriteFile(CONFIG_FILE, conf);
+
+    #ifdef DEBUGMODE
+        PrintlnSerial("Read config file:");
+        PrintlnSerial(conf);
+    #endif
+
+    return (ret > 0);
 }
