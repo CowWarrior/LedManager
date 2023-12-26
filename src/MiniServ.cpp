@@ -95,17 +95,38 @@ void MiniServ::InitWiFi(String ssid, String password, int timeout_ms, String hos
     }
 }
 
+//initialize Access Point
+void MiniServ::InitAP(String ssid, String password)
+{
+    _SSID = ssid;
+    _password = password;
+
+    _isAPConnected = WiFi.softAP(_SSID, _password);
+
+    if (Serial)
+    {
+        Serial.println("Access Point Started!");
+        Serial.print("Ip Address:");
+        Serial.println(WiFi.softAPIP());
+    }
+}
+
 //checks if the WiFi connection is established
 bool MiniServ::IsWiFiConnected()
 {
     return WiFi.status() == WL_CONNECTED;
 }
 
+//Checks if the AP is active
+bool MiniServ::IsAPConnected()
+{
+    return _isAPConnected;
+}
 
 //initializes the webserver
 void MiniServ::InitWebServer(int port, int client_timeout)
 {
-    if(IsWiFiConnected())
+    if(IsWiFiConnected() || IsAPConnected())
     {
         _port = port;
         _clientTimeout = client_timeout;

@@ -24,8 +24,14 @@ public:
     //initialize Wifi and attempt to connect
     void InitWiFi(String ssid, String password, int timeout_ms=60000, String hostname="");
 
+    //initialize Access Point
+    void InitAP(String ssid, String password);
+
     //checks if the WiFi connection has been established
     bool IsWiFiConnected();
+
+    //checks if the AccessPoint is active
+    bool IsAPConnected();
 
     //initializes the webserver
     void InitWebServer(int port=80, int client_timeout=2000);
@@ -85,6 +91,7 @@ private:
     int _clientTimeout=2000;
     bool _isWiFiConnected = false;
     File uploadFile;
+    bool _isAPConnected = false;
     
     //Parse raw headers to get path
     String ParseRequestHeaderPath(String headers);
