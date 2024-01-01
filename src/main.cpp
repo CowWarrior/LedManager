@@ -47,8 +47,8 @@
 
 struct LedManagerConfiguration
 {
-    String  wifiSSID = "Maze";
-    String  wifiPassword = "MZZ8zbd9Vv8xtvrG9t38dKRX";
+    String  wifiSSID = "MyWiFi";
+    String  wifiPassword = "MyPassword";
     int     wifiTimeout = 60000;
     String  wifiHostname = "PIXELART";
 };
@@ -78,6 +78,9 @@ void HandleDownloadImage();
 void HandleDeleteImage();
 void HandleStorageInfo();
 void HandleShowcase();
+void HandleUploadConfig();
+void HandleDownloadConfig();
+void HandleConfig();
 
 void setup() {
     //initialize pins
@@ -94,16 +97,37 @@ void setup() {
         #endif
         _configMode = true;
     }
+    else
+    {
+        //Initialize WiFi
+        _server.InitWiFi(_config.wifiSSID, _config.wifiPassword, _config.wifiTimeout, _config.wifiHostname);
+    }
 
-    //Initialize WiFi
-    _server.InitWiFi(_config.wifiSSID, _config.wifiPassword, _config.wifiTimeout, _config.wifiHostname);
+    //fallback in AP mode if WIFI failed or WiFi not yet configured
+    if (!_server.IsWiFiConnected())
+        _server.InitAP("PIXELART-AP", "");
 
     //Initialize Web Server
-    _server.WServer.on("/", HandleMainPage);
-    _server.WServer.on("/default.htm", RedirectMainPage);
-    _server.WServer.on("/default.html", RedirectMainPage);
-    _server.WServer.on("/index.htm", RedirectMainPage);
-    _server.WServer.on("/index.html", RedirectMainPage);
+    if (_server.IsAPConnected())
+    {
+        //force configuration mode
+        _server.WServer.on("/", HandleConfig);
+        _server.WServer.on("/default.htm", HandleConfig);
+        _server.WServer.on("/default.html", HandleConfig);
+        _server.WServer.on("/index.htm", HandleConfig);
+        _server.WServer.on("/index.html", HandleConfig);
+    }
+    else
+    {
+        //regular main page handling
+        _server.WServer.on("/", HandleMainPage);
+        _server.WServer.on("/default.htm", RedirectMainPage);
+        _server.WServer.on("/default.html", RedirectMainPage);
+        _server.WServer.on("/index.htm", RedirectMainPage);
+        _server.WServer.on("/index.html", RedirectMainPage);
+    }
+
+    //Standard request handling
     _server.WServer.onNotFound(HandleNotFound);
     _server.WServer.on("/info", HandleInfo);
     _server.WServer.on("/effect", HandleEffect);
@@ -113,6 +137,12 @@ void setup() {
     _server.WServer.on("/image", HTTP_GET, HandleDownloadImage);
     _server.WServer.on("/image", HTTP_DELETE, HandleDeleteImage);
     _server.WServer.on("/storage", HandleStorageInfo);
+    _server.WServer.on("/config", HTTP_PUT, HandleUploadConfig);
+    _server.WServer.on("/config", HTTP_POST, HandleUploadConfig);
+    _server.WServer.on("/config", HTTP_GET, HandleDownloadConfig);
+    _server.WServer.on("/config.htm", HandleConfig);
+    _server.WServer.on("/config.html", HandleConfig);
+
 
     //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
 
@@ -412,7 +442,7 @@ void HandleStorageInfo()
     if (!SPIFFS.begin(true))
     {
         #ifdef DEBUGMODE
-            PrintlnSerial("An Error has occu rred while mounting SPIFFS");
+            PrintlnSerial("An Error has occured while mounting SPIFFS");
         #endif
 
         _server.SendResponse("Error getting storage info.", 500, "text/plain"); 
@@ -506,35 +536,27 @@ void HandleShowcase()
     }
 }
 
-bool ReadConfig()
+
+bool DeserializeConfig(String conf)
 {
-    //read config file
-    String conf = FSReadFile(CONFIG_FILE);
+    StaticJsonDocument<512> doc;
+    deserializeJson(doc, conf);
 
-    if (conf =="")
-        return false;
-    else
-    {
-        //deserialize config data
-        StaticJsonDocument<512> doc;
-        deserializeJson(doc, conf);
+    #ifdef DEBUGMODE
+        PrintlnSerial("Deserialized config:");
+        serializeJsonPretty(doc, Serial);
+    #endif
 
-        #ifdef DEBUGMODE
-            PrintlnSerial("Read config file:");
-            serializeJsonPretty(doc, Serial);
-        #endif
+    //load config data into global variable
+    _config.wifiHostname = doc["wifi"]["hostname"].as<String>();
+    _config.wifiPassword = doc["wifi"]["pwd"].as<String>();
+    _config.wifiSSID = doc["wifi"]["ssid"].as<String>();
+    _config.wifiTimeout = doc["wifi"]["timeout"];
 
-        //load config data into global variable
-        _config.wifiHostname = doc["wifi"]["hostname"].as<String>();
-        _config.wifiPassword = doc["wifi"]["pwd"].as<String>();
-        _config.wifiSSID = doc["wifi"]["ssid"].as<String>();
-        _config.wifiTimeout = doc["wifi"]["timeout"];
-
-        return true;
-    }
+    return true; //success
 }
 
-bool SaveConfig()
+String SerializeConfig(bool maskPassword=false)
 {
     String conf = "";
     StaticJsonDocument<512> doc;
@@ -545,16 +567,86 @@ bool SaveConfig()
     doc["wifi"]["ssid"] = _config.wifiSSID;
     doc["wifi"]["timeout"] = _config.wifiTimeout;
 
+    if (maskPassword)
+        doc["wifi"]["pwd"]="";
+
     //serialize data
     serializeJson(doc, conf);
+
+    return conf;
+}
+
+bool ReadConfig()
+{
+    //read config file
+    String conf = FSReadFile(CONFIG_FILE);
+
+    #ifdef DEBUGMODE
+        PrintlnSerial("Read config from file:");
+        PrintlnSerial(conf);
+    #endif
+
+    if (conf =="")
+        return false;
+    else
+    {
+        //deserialize config data, and return if the operation was succesful
+        return DeserializeConfig(conf);
+    }
+}
+
+bool SaveConfig()
+{
+    String conf = SerializeConfig();
 
     //write config to file
     int ret = FSWriteFile(CONFIG_FILE, conf);
 
     #ifdef DEBUGMODE
-        PrintlnSerial("Read config file:");
+        PrintlnSerial("Wrote config to file:");
         PrintlnSerial(conf);
     #endif
 
     return (ret > 0);
+}
+
+//Configuration Webpage
+void HandleConfig()
+{
+    //indicate data received
+    BlinkBoardData();
+    
+    //Send the main page fille
+    _server.SendFileResponse("/www/config.htm");
+}
+
+//Handle config API PUT
+void HandleUploadConfig()
+{
+    String configData = _server.GetQueryStringParameter("configdata");
+
+    #ifdef DEBUGMODE
+        PrintlnSerial("received configuration string:");
+        PrintlnSerial(configData);
+    #endif
+
+    if (DeserializeConfig(configData))
+    {
+        //default timout to 60s
+        _config.wifiTimeout = 60000;
+
+        //Read OK, save the config
+        SaveConfig();
+        _server.SendResponse("OK", 200, "text/plain");
+    }
+    else
+        _server.SendResponse("Unable to update config!", 500, "text/plain");
+}
+
+//Handle config API GET
+void HandleDownloadConfig()
+{
+    String configData = SerializeConfig(true);
+
+    _server.SendResponse(configData, 200, "application/json");
 }
