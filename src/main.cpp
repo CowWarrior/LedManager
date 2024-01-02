@@ -208,6 +208,12 @@ void HandleEffect()
         SetLEDCurrentEffect("Solid", color);
         _server.SendResponse("Effect set to: Solid (" + GetLEDCurrentEffectParameters() + ")");
     }
+    else if (effect == "off")
+    {
+        _showcaseMode=false;
+        SetLEDCurrentEffect("Solid", "000000");
+        _server.SendResponse("Effect set to: Off");
+    }    
     else if (effect == "beat")
     {
         _showcaseMode=false;
