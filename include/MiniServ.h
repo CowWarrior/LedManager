@@ -14,6 +14,7 @@ class MiniServ
 public:
     //Public Members
     WebServer WServer;
+    bool AutoReconnect = true;
 
     //Constructor
     MiniServ();

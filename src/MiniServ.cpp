@@ -26,6 +26,10 @@
 //https://techtutorialsx.com/2017/03/26/esp8266-webserver-accessing-the-body-of-a-http-request/
 //https://www.dfrobot.com/blog-1105.html
 //https://esp32io.com/tutorials/esp32-web-server-multiple-pages
+//to handle WiFi re-connect: https://randomnerdtutorials.com/esp32-useful-wi-fi-functions-arduino/
+
+void OnLostConnection(WiFiEvent_t event, WiFiEventInfo_t info);
+
 
 //Constructor
 MiniServ::MiniServ()
@@ -80,6 +84,11 @@ void MiniServ::InitWiFi(String ssid, String password, int timeout_ms, String hos
     {
         _isWiFiConnected = true;
 
+        if (AutoReconnect)
+        {
+            WiFi.onEvent(OnLostConnection, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+        }
+
         if (Serial)
         {
             Serial.print(hostname);
@@ -93,6 +102,54 @@ void MiniServ::InitWiFi(String ssid, String password, int timeout_ms, String hos
             Serial.println(WiFi.localIP());
         }
     }
+}
+
+//Handles lost connections
+void OnLostConnection(WiFiEvent_t event, WiFiEventInfo_t info)
+{
+    if (Serial)
+    {
+        Serial.println("Disconnected from WiFi access point");
+        Serial.print("WiFi lost connection. Reason: ");
+        Serial.println(info.wifi_sta_disconnected.reason);
+        Serial.println("Trying to Reconnect...");
+    }
+
+    //avoid endless loops during reconnection process
+    WiFi.removeEvent(WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+    WiFi.disconnect();
+    delay(10000);
+   
+    int wait_time_ms = 0;
+    WiFi.begin();
+    
+    while (wait_time_ms < 60000 && WiFi.status() != WL_CONNECTED)
+    {
+        if (Serial)
+            Serial.print(".");
+
+        delay(500);
+        wait_time_ms += 500;
+    }
+
+    if (WiFi.status() != WL_CONNECTED)
+    {
+        if (Serial)
+            Serial.println(" Timeout!");
+    }
+    else
+    {
+        //re-attach event
+        WiFi.onEvent(OnLostConnection, WiFiEvent_t::ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
+
+        if (Serial)
+        {
+            Serial.println("Re-connected!");
+            Serial.print("IP address: ");
+            Serial.println(WiFi.localIP());
+        }
+    }
+    
 }
 
 //initialize Access Point
