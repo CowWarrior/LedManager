@@ -27,6 +27,8 @@
 #define LED_GPIO_PIN            13
 #define BOARD_PIN_LED           2
 #define WIFIUTILS_SERVERPORT    80
+#define LED_DEFAULT_EFFECT      "Default"
+#define LED_DEFAULT_SHOWCASE    false
 
 #define CONFIG_FILE             "/config.json"
 #define IMAGE_DIR               "/images/"
@@ -56,7 +58,7 @@ struct LedManagerConfiguration
 
 //Global Variables
 MiniServ _server;
-bool _showcaseMode = true;
+bool _showcaseMode = LED_DEFAULT_SHOWCASE;
 bool _configMode = false;
 int _showcaseImageIndex  = 0;
 unsigned long _showcaseDelayMs = 20000;
@@ -151,9 +153,7 @@ void setup() {
 
     //Initialize LEDs
     InitLED();
-    //SetLEDCurrentEffect("Default");
-    //default to showcase insted
-    _showcaseMode=true;
+    SetLEDCurrentEffect(LED_DEFAULT_EFFECT);
       
     //blink twice to indicate we are ready
     BlinkBoard(2, 250);
