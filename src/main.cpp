@@ -226,6 +226,12 @@ void HandleEffect()
         SetLEDCurrentEffect("Rainbow");
         _server.SendResponse("Effect set to: Rainbow");
     }
+    else if (effect == "northpole")
+    {
+        _showcaseMode=false;
+        SetLEDCurrentEffect("Pattern", "FF0000000000000000FFFFFF000000000000");
+        _server.SendResponse("Effect set to: Rainbow");
+    }    
     else if (effect == "image")
     {
         _showcaseMode=false;
