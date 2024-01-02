@@ -231,7 +231,20 @@ void HandleEffect()
         _showcaseMode=false;
         SetLEDCurrentEffect("Pattern", "FF0000000000000000FFFFFF000000000000");
         _server.SendResponse("Effect set to: Rainbow");
+    }
+    else if (effect == "quebec")
+    {
+        _showcaseMode=false;
+        SetLEDCurrentEffect("Pattern", "0000FF000000000000FFFFFF000000000000");
+        _server.SendResponse("Effect set to: Rainbow");
     }    
+    else if (effect == "festive")
+    {
+        //bleu orange vert roughe jaune
+        _showcaseMode=false;
+        SetLEDCurrentEffect("Pattern", "0000FF00000000000000FF000000000000000000FF000000000000F3E220000000000000FF0000000000000000");
+        _server.SendResponse("Effect set to: Rainbow");
+    }
     else if (effect == "image")
     {
         _showcaseMode=false;
