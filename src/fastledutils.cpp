@@ -57,6 +57,7 @@ void DrawLEDBeatEffect();
 void DrawLEDRainbowEffect();
 void DrawLEDSolidEffect();
 void DrawLEDImageEffect();
+void DrawLEDPatternEffect();
 
 //Initialize LED display
 void InitLED()
@@ -204,6 +205,8 @@ void DrawLEDCurrentEffectFrame()
         DrawLEDSolidEffect();
     else if (ledCurrentEffect == "IMAGE")
         DrawLEDImageEffect();
+    else if (ledCurrentEffect == "PATTERN")
+        DrawLEDPatternEffect();
     else
         DrawLEDBeatEffect(); //Default to beat effect
 
@@ -337,6 +340,61 @@ void DrawLEDSolidEffect()
         for (int i = 0; i <= LED_NUM_LEDS-1; i++) {
             //light new pixel
             leds[i] = CRGB(targetColor);
+        }
+
+        //update strip
+        FastLED.show();
+
+        //change frame
+        ledFrameIndex = 1;
+    }
+}
+
+void DrawLEDPatternEffect()
+{
+    //only need to do this once really
+    if (ledFrameIndex == 0)
+    {
+        int patternLength = ledCurrentEffectParameters.length() / 6;
+        uint32_t patternArray[patternLength];
+
+        //extract pattern from param
+        for (int i=0; i<patternLength; i++)
+        {
+            int start = i*6;
+            int end = start+6;
+            String patternPixel = ledCurrentEffectParameters.substring(start, end);
+            uint32_t pixelColor = HexStrToInt(patternPixel);
+            patternArray[i] = pixelColor;
+        }
+
+        #ifdef FASTLEDUTILS_DEBUGMODE
+            if (Serial)
+            {
+                Serial.print("Pattern \"");
+                Serial.print(ledCurrentEffectParameters);
+                Serial.println("\" converted to:");
+                for (int i=0; i<patternLength; i++)
+                {
+                    Serial.print(patternArray[i], HEX);
+                    Serial.print(",");
+                }
+                Serial.println("");
+            }
+        #endif
+
+        //clear strip
+        FastLED.clear();
+
+        //set all LEDS
+        for (int i = 0; i <= LED_NUM_LEDS-1; i+=patternLength) 
+        {
+            //light segement
+            for (int j=0; j<patternLength; j++)
+            {
+                leds[i+j] = CRGB(patternArray[j]);
+            }
+            
         }
 
         //update strip
