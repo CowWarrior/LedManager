@@ -129,21 +129,24 @@ void setup() {
         _server.WServer.on("/index.html", RedirectMainPage);
     }
 
-    //Standard request handling
+    //Standard pages request handling
     _server.WServer.onNotFound(HandleNotFound);
-    _server.WServer.on("/info", HandleInfo);
-    _server.WServer.on("/effect", HandleEffect);
     _server.WServer.on("/favicon.ico", HandleFavIcon);
-    _server.WServer.on("/images", HandleListImages);
-    _server.WServer.on("/image", HTTP_PUT, HandleUploadImage);
-    _server.WServer.on("/image", HTTP_GET, HandleDownloadImage);
-    _server.WServer.on("/image", HTTP_DELETE, HandleDeleteImage);
-    _server.WServer.on("/storage", HandleStorageInfo);
-    _server.WServer.on("/config", HTTP_PUT, HandleUploadConfig);
-    _server.WServer.on("/config", HTTP_POST, HandleUploadConfig);
-    _server.WServer.on("/config", HTTP_GET, HandleDownloadConfig);
     _server.WServer.on("/config.htm", HandleConfig);
     _server.WServer.on("/config.html", HandleConfig);
+    _server.WServer.on("/info.htm", HandleInfo);
+    _server.WServer.on("/info.html", HandleInfo);
+
+    //API requests
+    _server.WServer.on("/api/effect", HandleEffect);    
+    _server.WServer.on("/api/images", HandleListImages);
+    _server.WServer.on("/api/image", HTTP_PUT, HandleUploadImage);
+    _server.WServer.on("/api/image", HTTP_GET, HandleDownloadImage);
+    _server.WServer.on("/api/image", HTTP_DELETE, HandleDeleteImage);
+    _server.WServer.on("/api/storage", HandleStorageInfo);
+    _server.WServer.on("/api/config", HTTP_PUT, HandleUploadConfig);
+    _server.WServer.on("/api/config", HTTP_POST, HandleUploadConfig);
+    _server.WServer.on("/api/config", HTTP_GET, HandleDownloadConfig);
 
 
     //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/

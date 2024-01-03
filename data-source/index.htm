@@ -125,7 +125,7 @@
             }
             //get image list from server
             function getImageList() {
-                var loc = "./images";
+                var loc = "./api/images";
                 $.ajax({
                     url: loc,
                     success : function(data) {              
@@ -168,7 +168,7 @@
                 }
 
                 //stick values in query string
-                var loc = "./image?imgname=" + imageName + "&imgdata=" + imageData.toUpperCase();
+                var loc = "./api/image?imgname=" + imageName + "&imgdata=" + imageData.toUpperCase();
 
                 $.ajax({
                     url: loc,
@@ -246,7 +246,7 @@
             }
             function updateStorageInfo() {
                 $.ajax({
-                    url: "./storage",
+                    url: "./api/storage",
                     success: function (data) { 
                         var used = data.UsedBytes / 1024 / 1024;
                         var total = data.TotalBytes / 1024 / 1024;
@@ -274,7 +274,7 @@
             $(function() {
                 //Send Effect command
                 $("#btnEffect").on("click", function() {
-                    var loc = "./effect";
+                    var loc = "./api/effect";
                     var dat = {};
 
                     //choose which parameters to send
@@ -296,7 +296,7 @@
                 //Send brightness command
                 $("#btnBrightness").on("click", function() {
                     var i = parseInt($("#sldBrightness").val());
-                    var loc = "./effect";
+                    var loc = "./api/effect";
                     var dat = {brightness: i.toString(16)};
                     $.ajax({
                         url: loc,
@@ -339,7 +339,7 @@
                     var imageName = $("#cbxImageDelete").val(); 
 
                     //stick values in query string
-                    var loc = "./image?imgname=" + imageName;
+                    var loc = "./api/image?imgname=" + imageName;
 
                     $.ajax({
                         url: loc,
