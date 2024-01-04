@@ -27,10 +27,11 @@
                     Run a predefined effect:
                     <select id="cbxEffect">
                         <option value="default" selected>Default</option>
+                        <option value="beat" data-col="true">Beat</option>
                         <option value="rainbow">Rainbow</option>
                         <option value="showcase">Showcase</option>
-                        <option value="solid">Solid Color</option>
-                        <option value="image">Image</option>
+                        <option value="solid" data-col="true">Solid Color</option>
+                        <option value="image" data-img="true">Image</option>
                         <option value="northpole">North Pole (Red & White)</option>
                         <option value="quebec">Qu&eacute;bec (Blue & White)</option>
                         <option value="festive">Multicolor</option>
@@ -235,13 +236,28 @@
                 var context = canvas.getContext('2d');
                 context.clearRect(0, 0, canvas.width, canvas.height);
             }
+            function isSelectedDataAttributeTrue(selectName, dataAttr) {
+                // Find the select element by name and get the selected option
+                var selectedOption = $('#' + selectName).children('option:selected');
+
+                // Check if the specified data attribute of the selected option is set to 'true'
+                return selectedOption.data(dataAttr) === true;
+            }
+            function effectHasColor()
+            {
+                return isSelectedDataAttributeTrue("cbxEffect", "col");
+            }
+            function effectHasImage()
+            {
+                return isSelectedDataAttributeTrue("cbxEffect", "img");
+            }
             function updateEffectsControls() {
                 $("#colSolid").hide();
                 $("#cbxImageEffect").hide();
 
-                if ($("#cbxEffect").val() == "image")
+                if (effectHasImage())
                     $("#cbxImageEffect").show();
-                else if ($("#cbxEffect").val() == "solid")
+                else if (effectHasColor())
                     $("#colSolid").show();
             }
             function updateStorageInfo() {
@@ -278,9 +294,9 @@
                     var dat = {};
 
                     //choose which parameters to send
-                    if ($("#cbxEffect").val() == "image")
-                        dat = {name: $("#cbxEffect").val(), imgname: $("#cbxImageEffect").val()};
-                    else if ($("#cbxEffect").val() == "solid")
+                    if (effectHasImage())
+                        dat = {name: $("#cbxEffect").val(), imgname: $("#cbxImageEffect").val()};                    
+                    else if (effectHasColor())
                         dat = {name: $("#cbxEffect").val(), color: $("#colSolid").val().replace("#", "")};
                     else
                         dat = {name: $("#cbxEffect").val()};                    
