@@ -217,12 +217,19 @@ void DrawLEDBeatEffect()
 {
     static bool isReverse = false;
 
+    //set default beat color
+    CRGB targetColor = CRGB(0, 0, 64);
+
+    //override default color if specified
+    if (ledCurrentEffectParameters != "")
+        targetColor = CRGB(HexStrToInt(ledCurrentEffectParameters));
+
     if (!isReverse)
     {
         //FORWARD       
         
         //light new led
-        leds[ledFrameIndex] = CRGB(0, 0, 64);
+        leds[ledFrameIndex] = targetColor;
 
         //cehck if we reached the end
         if (ledFrameIndex >= LED_NUM_LEDS-1)

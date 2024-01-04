@@ -220,7 +220,7 @@ void HandleEffect()
     else if (effect == "beat")
     {
         _showcaseMode=false;
-        SetLEDCurrentEffect("Beat");
+        SetLEDCurrentEffect("Beat", color);
         _server.SendResponse("Effect set to: Beat");
     }
     else if (effect == "rainbow")
