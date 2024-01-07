@@ -46,6 +46,7 @@
 #include <fastledutils.h>
 #include <fileutils.h>
 #include <ArduinoJson.h>
+#include <NtpHelper.h>
 
 struct LedManagerConfiguration
 {
@@ -64,6 +65,7 @@ int _showcaseImageIndex  = 0;
 unsigned long _showcaseDelayMs = 20000;
 unsigned long _showcasePreviousTime = millis() - _showcaseDelayMs - 1;
 LedManagerConfiguration _config;
+NtpHelper _timeLord = NtpHelper();
 
 //Prototyopes
 bool ReadConfig();
@@ -105,9 +107,18 @@ void setup() {
         _server.InitWiFi(_config.wifiSSID, _config.wifiPassword, _config.wifiTimeout, _config.wifiHostname);
     }
 
-    //fallback in AP mode if WIFI failed or WiFi not yet configured
-    if (!_server.IsWiFiConnected())
+    //check if we are successfully connected to the WiFi (and hopefully internet)
+    if (_server.IsWiFiConnected())
+    {
+        _timeLord.ConfigNTP("time.nrc.ca");
+        PrintSerial("Current time is: ");
+        PrintlnSerial(_timeLord.GetDateTime());
+    }
+    else
+    {
+        //fallback in AP mode if WIFI failed or WiFi not yet configured
         _server.InitAP("PIXELART-AP", "");
+    }
 
     //Initialize Web Server
     if (_server.IsAPConnected())
