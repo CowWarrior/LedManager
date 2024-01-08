@@ -280,6 +280,25 @@
                     }
                 });
             }
+            function updateCurrentEffect()
+            {
+                $.ajax({
+                    url: "./api/effect",
+                    success: function (data) { 
+                        var used = data.UsedBytes / 1024 / 1024;
+                        var total = data.TotalBytes / 1024 / 1024;
+                        var pct = Math.round(used / total * 100);
+                        if (pct < 1)
+                            pct = 1;
+                        else if (pct > 100)
+                            pct = 100;
+
+                        //show info
+                        $("#cbxEffect").val(data.effect.toLowerCase());
+                        $("#sldBrightness").val(data.brightness);
+                    }
+                });                
+            }
             function toColor(n) {
                 if (n<16)
                     return "0" + n.toString(16);
@@ -303,6 +322,7 @@
                     
                      $.ajax({
                         url: loc,
+                        type: 'PUT',
                         data: dat
                     });
                 });
@@ -372,6 +392,8 @@
                 refreshForms();
                 //get storage info
                 updateStorageInfo();
+                //get current effect
+                updateCurrentEffect();
             });
         </script>
     </body>

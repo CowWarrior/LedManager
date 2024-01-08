@@ -70,20 +70,21 @@ NtpHelper _timeLord = NtpHelper();
 //Prototyopes
 bool ReadConfig();
 bool SaveConfig();
-void HandleEffect();
+void HandleSetEffect();
+void HandleGetEffect();
 void HandleNotFound();
-void HandleMainPage();
+void HandleGetMainPage();
 void RedirectMainPage();
-void HandleInfo();
-void HandleFavIcon();
+void HandleGetInfoPage();
+void HandleGetFavIcon();
 void HandleListImages();
-void HandleUploadImage();
-void HandleDownloadImage();
+void HandleSetImage();
+void HandleGetImage();
 void HandleDeleteImage();
-void HandleStorageInfo();
-void HandleShowcase();
-void HandleUploadConfig();
-void HandleDownloadConfig();
+void HandleGetStorageInfo();
+void HandleShowcaseMode();
+void HandleSetConfig();
+void HandleGetConfig();
 void HandleConfig();
 
 void setup() {
@@ -133,7 +134,7 @@ void setup() {
     else
     {
         //regular main page handling
-        _server.WServer.on("/", HandleMainPage);
+        _server.WServer.on("/", HandleGetMainPage);
         _server.WServer.on("/default.htm", RedirectMainPage);
         _server.WServer.on("/default.html", RedirectMainPage);
         _server.WServer.on("/index.htm", RedirectMainPage);
@@ -142,22 +143,24 @@ void setup() {
 
     //Standard pages request handling
     _server.WServer.onNotFound(HandleNotFound);
-    _server.WServer.on("/favicon.ico", HandleFavIcon);
+    _server.WServer.on("/favicon.ico", HandleGetFavIcon);
     _server.WServer.on("/config.htm", HandleConfig);
     _server.WServer.on("/config.html", HandleConfig);
-    _server.WServer.on("/info.htm", HandleInfo);
-    _server.WServer.on("/info.html", HandleInfo);
+    _server.WServer.on("/info.htm", HandleGetInfoPage);
+    _server.WServer.on("/info.html", HandleGetInfoPage);
 
     //API requests
-    _server.WServer.on("/api/effect", HandleEffect);    
+    _server.WServer.on("/api/effect", HTTP_PUT, HandleSetEffect);
+    _server.WServer.on("/api/effect", HTTP_POST, HandleSetEffect);
+    _server.WServer.on("/api/effect", HTTP_GET, HandleGetEffect);
     _server.WServer.on("/api/images", HandleListImages);
-    _server.WServer.on("/api/image", HTTP_PUT, HandleUploadImage);
-    _server.WServer.on("/api/image", HTTP_GET, HandleDownloadImage);
+    _server.WServer.on("/api/image", HTTP_PUT, HandleSetImage);
+    _server.WServer.on("/api/image", HTTP_GET, HandleGetImage);
     _server.WServer.on("/api/image", HTTP_DELETE, HandleDeleteImage);
-    _server.WServer.on("/api/storage", HandleStorageInfo);
-    _server.WServer.on("/api/config", HTTP_PUT, HandleUploadConfig);
-    _server.WServer.on("/api/config", HTTP_POST, HandleUploadConfig);
-    _server.WServer.on("/api/config", HTTP_GET, HandleDownloadConfig);
+    _server.WServer.on("/api/storage", HandleGetStorageInfo);
+    _server.WServer.on("/api/config", HTTP_PUT, HandleSetConfig);
+    _server.WServer.on("/api/config", HTTP_POST, HandleSetConfig);
+    _server.WServer.on("/api/config", HTTP_GET, HandleGetConfig);
 
 
     //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
@@ -181,13 +184,25 @@ void loop() {
     _server.HandleClientRequests();
 
     //Handle showcase
-    HandleShowcase();
+    HandleShowcaseMode();
 
     //Handle LED display
     DrawLEDFrame();
 }
 
-void HandleEffect()
+void HandleGetEffect()
+{
+    //indicate data received
+    BlinkBoardData();
+
+    //build information
+    String effectInfo = "{\"effect\": \"" + GetLEDCurrentEffect() + "\", \"brightness\": " + GetLEDBrightness() + "}";
+
+    //Return current effect
+    _server.SendResponse(effectInfo, 200, "application/json");
+}
+
+void HandleSetEffect()
 {
     //indicate data received
     BlinkBoardData();
@@ -283,7 +298,7 @@ void HandleEffect()
 }
 
 //Serve Main Page
-void HandleMainPage()
+void HandleGetMainPage()
 {
     //indicate data received
     BlinkBoardData();
@@ -299,7 +314,7 @@ void RedirectMainPage()
     BlinkBoardData();
 
     //TODO: for now just serve page, will create proper handler later
-    HandleMainPage();
+    HandleGetMainPage();
 }
 
 //Serve Not Found
@@ -313,7 +328,7 @@ void HandleNotFound()
 }
 
 //Serve Info Page
-void HandleInfo()
+void HandleGetInfoPage()
 {
     //get headers and convert them to html readable format
     String headers = "Header count: " + String(_server.WServer.headers());
@@ -344,7 +359,7 @@ void HandleInfo()
 }
 
 //Favorite icon
-void HandleFavIcon()
+void HandleGetFavIcon()
 {
     _server.SendBinaryFileResponse("/www/favicon.ico");
 }
@@ -404,7 +419,7 @@ void HandleListImages()
     _server.SendResponse(imgListJson, 200, "application/json");
 }
 
-void HandleUploadImage()
+void HandleSetImage()
 {
     String fileName = _server.GetQueryStringParameter("imgname");
     String fileData = _server.GetQueryStringParameter("imgdata");
@@ -433,7 +448,7 @@ void HandleUploadImage()
     }
 }
 
-void HandleDownloadImage()
+void HandleGetImage()
 {  
     String fileName = IMAGE_DIR +  _server.GetQueryStringParameter("imgname") + IMAGE_EXT;
     
@@ -476,7 +491,7 @@ void HandleDeleteImage()
 
 }
 
-void HandleStorageInfo()
+void HandleGetStorageInfo()
 {
     if (!SPIFFS.begin(true))
     {
@@ -542,7 +557,7 @@ String GetImageById(int imgID)
     return "";
 }
 
-void HandleShowcase()
+void HandleShowcaseMode()
 {
     //check if we are in showcase mode
     if (_showcaseMode)
@@ -660,7 +675,7 @@ void HandleConfig()
 }
 
 //Handle config API PUT
-void HandleUploadConfig()
+void HandleSetConfig()
 {
     String configData = _server.GetQueryStringParameter("configdata");
 
@@ -683,7 +698,7 @@ void HandleUploadConfig()
 }
 
 //Handle config API GET
-void HandleDownloadConfig()
+void HandleGetConfig()
 {
     String configData = SerializeConfig(true);
 
