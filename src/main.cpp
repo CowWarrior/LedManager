@@ -67,6 +67,7 @@ unsigned long _showcaseDelayMs = 20000;
 unsigned long _showcasePreviousTime = millis() - _showcaseDelayMs - 1;
 LedManagerConfiguration _config;
 NtpHelper _timeLord = NtpHelper();
+String _currentEffect = "";
 
 //Prototyopes
 bool ReadConfig();
@@ -87,6 +88,7 @@ void HandleShowcaseMode();
 void HandleSetConfig();
 void HandleGetConfig();
 void HandleConfigPage();
+void ActivateEffect(String effect, String color="", String brightness="", String imgname="");
 
 void setup() {
     //initialize pins
@@ -171,8 +173,13 @@ void setup() {
 
     //Initialize LEDs
     InitLED();
-    SetLEDCurrentEffect(LED_DEFAULT_EFFECT);
-      
+
+    //Apply initial effect (from config if possible)
+    if (_config.effectDefault != "")
+        ActivateEffect(_config.effectDefault);
+    else
+        ActivateEffect(LED_DEFAULT_EFFECT);
+
     //blink twice to indicate we are ready
     BlinkBoard(2, 250);
 
@@ -197,7 +204,7 @@ void HandleGetEffect()
     BlinkBoardData();
 
     //build information
-    String effectInfo = "{\"effect\": \"" + GetLEDCurrentEffect() + "\", \"brightness\": " + GetLEDBrightness() + "}";
+    String effectInfo = "{\"effect\": \"" + _currentEffect + "\", \"brightness\": " + GetLEDBrightness() + "}";
 
     //Return current effect
     _server.SendResponse(effectInfo, 200, "application/json");
@@ -209,93 +216,118 @@ void HandleSetEffect()
     BlinkBoardData();
 
     //read parameters
-    String effect = _server.GetQueryStringParameter("name");
-    effect.toLowerCase();
-    String color = _server.GetQueryStringParameter("color");
-    color.toUpperCase();
-    String brightness = _server.GetQueryStringParameter("brightness");
-    brightness.toUpperCase();
-    String imgdata = _server.GetQueryStringParameter("imgdata");
-    imgdata.toUpperCase();
-    String imgname = _server.GetQueryStringParameter("imgname");
-    
+    String p_effect = _server.GetQueryStringParameter("name");
+    p_effect.toLowerCase();
+    String p_color = _server.GetQueryStringParameter("color");
+    p_color.toUpperCase();
+    String p_brightness = _server.GetQueryStringParameter("brightness");
+    p_brightness.toUpperCase();
+    String p_imgname = _server.GetQueryStringParameter("imgname");
+    String p_setdefault = _server.GetQueryStringParameter("setdefault");
+
+    PrintSerial("Query String: ");
+    PrintlnSerial(_server.GetRequestPath());
 
     #ifdef DEBUGMODE
-        PrintlnSerial("effect:" + effect);
-        PrintlnSerial("color:" + color);
-        PrintlnSerial("brightness:" + brightness);
+        PrintlnSerial("effect:" + p_effect);
+        PrintlnSerial("color:" + p_color);
+        PrintlnSerial("brightness:" +p_brightness);
+        PrintlnSerial("imgname:" + p_imgname);
+        PrintlnSerial("setdefault:" + p_setdefault);
     #endif
 
-    //DO STUFF HERE
+    //Activate the effect
+    ActivateEffect(p_effect, p_color, p_brightness, p_imgname);
+
+    //Respond to client request
+    String responseMesage = "Effect set to: " + p_effect;
+    if (p_color != "")
+        responseMesage += " (" + p_color + ")";
+    if (p_imgname != "")
+        responseMesage += " (" + p_imgname + ")";
+    _server.SendResponse(responseMesage);
+
+    //adjust brightness if required
+    if (p_brightness != "")
+        SetLEDBrightness(HexStrToInt(p_brightness));
+
+    //change default if required
+    if (p_setdefault == "1")
+    {
+        _config.effectDefault = _currentEffect;
+        SaveConfig();
+
+        #ifdef DEBUGMODE
+            PrintlnSerial("Default changed to: " + _currentEffect);
+        #endif        
+    }
+}
+
+void ActivateEffect(String effect, String color, String brightness, String imgname)
+{
     if (effect == "default")
     {
-        SetLEDCurrentEffect("Default");
-        _server.SendResponse("Effect set to: Default");
+        _currentEffect = "default";
+        SetLEDCurrentEffect("Default");   
     }
     else if (effect == "solid")
     {
         _showcaseMode=false;
+        _currentEffect = "solid";
         SetLEDCurrentEffect("Solid", color);
-        _server.SendResponse("Effect set to: Solid (" + GetLEDCurrentEffectParameters() + ")");
     }
     else if (effect == "off")
     {
         _showcaseMode=false;
+        _currentEffect = "off";
         SetLEDCurrentEffect("Solid", "000000");
-        _server.SendResponse("Effect set to: Off");
     }    
     else if (effect == "beat")
     {
         _showcaseMode=false;
+        _currentEffect = "beat";
         SetLEDCurrentEffect("Beat", color);
-        _server.SendResponse("Effect set to: Beat");
     }
     else if (effect == "rainbow")
     {
         _showcaseMode=false;
+        _currentEffect = "rainbow";
         SetLEDCurrentEffect("Rainbow");
-        _server.SendResponse("Effect set to: Rainbow");
     }
     else if (effect == "northpole")
     {
         _showcaseMode=false;
+        _currentEffect = "northpole";
         SetLEDCurrentEffect("Pattern", "FF0000000000000000FFFFFF000000000000");
-        _server.SendResponse("Effect set to: Rainbow");
     }
     else if (effect == "quebec")
     {
         _showcaseMode=false;
+        _currentEffect = "quebec";
         SetLEDCurrentEffect("Pattern", "0000FF000000000000FFFFFF000000000000");
-        _server.SendResponse("Effect set to: Rainbow");
     }    
     else if (effect == "festive")
     {
         //bleu orange vert roughe jaune
         _showcaseMode=false;
+        _currentEffect = "fastive";
         SetLEDCurrentEffect("Pattern", "0000FF00000000000000FF000000000000000000FF000000000000F3E220000000000000FF0000000000000000");
-        _server.SendResponse("Effect set to: Rainbow");
     }
     else if (effect == "image")
     {
         _showcaseMode=false;
+        _currentEffect = "image";
         SetLEDCurrentEffect("Image", FSReadFile(IMAGE_DIR + imgname + IMAGE_EXT));
-        _server.SendResponse("Effect set to: Image");
     }
     else if (effect == "showcase")
     {
         _showcaseMode=true;
-        _server.SendResponse("OK");
+        _currentEffect = "showcase";
     }
     else
     {
         //sometimes you just want to adjust brightness or color, dont change anything
-        _server.SendResponse("OK");
     }
-
-    //adjust brightness if required
-    if (brightness != "")
-        SetLEDBrightness(HexStrToInt(brightness));
-
 }
 
 //Serve Main Page

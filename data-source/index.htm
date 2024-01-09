@@ -40,7 +40,13 @@
                     <input id="colSolid" type="color" />
                     <select id="cbxImageEffect"></select>
                 </p>
-                <p><a class="btn btn-primary" id="btnEffect" href="#" role="button">Set Effect</a></p>
+                <p>
+                    <a class="btn btn-primary" id="btnEffect" href="#" role="button">Set Effect</a>
+                    <input type="checkbox" id="chkDefaultEffect" />
+                    <label for="chkDefaultEffect">set as default effect</label>
+                    <div id="txtSetEffectError" class="alert alert-warning">Error setting effect! - <span id="txtSetEffectErrorDescription"></span></div>
+                    <div id="txtSetEffectSuccess" class="alert alert-success">Effect changed! - <span id="txtSetEffectSuccessDescription"></span></div>
+                </p>
               </div>
               <div class="col-md-4">
                 <h2>Brightness</h2>
@@ -254,6 +260,8 @@
             function updateEffectsControls() {
                 $("#colSolid").hide();
                 $("#cbxImageEffect").hide();
+                $("#txtSetEffectError").hide();
+                $("#txtSetEffectSuccess").hide();
 
                 if (effectHasImage())
                     $("#cbxImageEffect").show();
@@ -318,12 +326,31 @@
                     else if (effectHasColor())
                         dat = {name: $("#cbxEffect").val(), color: $("#colSolid").val().replace("#", "")};
                     else
-                        dat = {name: $("#cbxEffect").val()};                    
+                        dat = {name: $("#cbxEffect").val()};
+
+                    if ($("#chkDefaultEffect").val() === "on")
+                        dat.setdefault = 1;
+                    else
+                        dat.setdefault = 0;
                     
-                     $.ajax({
+                    $.ajax({
                         url: loc,
                         type: 'PUT',
-                        data: dat
+                        data: dat,
+                        success: function (data) {
+                            //show success message
+                            $("#txtSetEffectSuccess").fadeIn("fast", function() {
+                                $("#txtSetEffectSuccessDescription").html(data);
+                                setTimeout(function () {$("#txtSetEffectSuccess").fadeOut("slow");}, 1500);
+                            });
+                        },
+                        error: function (e, msg) {
+                            //show error message
+                            $("#txtSetEffectError").fadeIn("fast", function() {
+                                $("#txtSetEffectErrorDescription").html(msg);
+                                setTimeout(function () {$("#txtSetEffectError").fadeOut("slow");}, 1500);
+                            });
+                        }
                     });
                 });
                 $("#cbxEffect").change(function (){
