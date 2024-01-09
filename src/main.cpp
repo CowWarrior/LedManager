@@ -54,6 +54,7 @@ struct LedManagerConfiguration
     String  wifiPassword = "MyPassword";
     int     wifiTimeout = 60000;
     String  wifiHostname = "PIXELART";
+    String  effectDefault = "DEFAULT";
 };
 
 
@@ -85,7 +86,7 @@ void HandleGetStorageInfo();
 void HandleShowcaseMode();
 void HandleSetConfig();
 void HandleGetConfig();
-void HandleConfig();
+void HandleConfigPage();
 
 void setup() {
     //initialize pins
@@ -125,11 +126,11 @@ void setup() {
     if (_server.IsAPConnected())
     {
         //force configuration mode
-        _server.WServer.on("/", HandleConfig);
-        _server.WServer.on("/default.htm", HandleConfig);
-        _server.WServer.on("/default.html", HandleConfig);
-        _server.WServer.on("/index.htm", HandleConfig);
-        _server.WServer.on("/index.html", HandleConfig);
+        _server.WServer.on("/", HandleConfigPage);
+        _server.WServer.on("/default.htm", HandleConfigPage);
+        _server.WServer.on("/default.html", HandleConfigPage);
+        _server.WServer.on("/index.htm", HandleConfigPage);
+        _server.WServer.on("/index.html", HandleConfigPage);
     }
     else
     {
@@ -144,8 +145,8 @@ void setup() {
     //Standard pages request handling
     _server.WServer.onNotFound(HandleNotFound);
     _server.WServer.on("/favicon.ico", HandleGetFavIcon);
-    _server.WServer.on("/config.htm", HandleConfig);
-    _server.WServer.on("/config.html", HandleConfig);
+    _server.WServer.on("/config.htm", HandleConfigPage);
+    _server.WServer.on("/config.html", HandleConfigPage);
     _server.WServer.on("/info.htm", HandleGetInfoPage);
     _server.WServer.on("/info.html", HandleGetInfoPage);
 
@@ -606,6 +607,7 @@ bool DeserializeConfig(String conf)
     _config.wifiPassword = doc["wifi"]["pwd"].as<String>();
     _config.wifiSSID = doc["wifi"]["ssid"].as<String>();
     _config.wifiTimeout = doc["wifi"]["timeout"];
+    _config.effectDefault = doc["effect"]["default"].as<String>();
 
     return true; //success
 }
@@ -620,6 +622,7 @@ String SerializeConfig(bool maskPassword=false)
     doc["wifi"]["pwd"] = _config.wifiPassword;
     doc["wifi"]["ssid"] = _config.wifiSSID;
     doc["wifi"]["timeout"] = _config.wifiTimeout;
+    doc["effect"]["default"] = _config.effectDefault;
 
     if (maskPassword)
         doc["wifi"]["pwd"]="";
@@ -665,7 +668,7 @@ bool SaveConfig()
 }
 
 //Configuration Webpage
-void HandleConfig()
+void HandleConfigPage()
 {
     //indicate data received
     BlinkBoardData();

@@ -331,13 +331,13 @@ void MiniServ::SendBinaryFileResponse(const char *filePath, int responseCode, St
 //Gets the value of a uery string parameter by name
 String MiniServ::GetQueryStringParameter(String paramName)
 {
-    return WServer.arg(paramName);
+    return WServer.urlDecode(WServer.arg(paramName));
 }
 
 //Gets the value of a uery string parameter by index
 String MiniServ::GetQueryStringParameter(int paramIndex)
 {
-    return WServer.arg(paramIndex);
+    return WServer.urlDecode(WServer.arg(paramIndex));
 }
 
 //Sends a 404 Not Found to the Web Client and the content of a file in body.
