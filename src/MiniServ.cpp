@@ -5,6 +5,11 @@
 // Description: The purpose of this file is to provide utility class for
 //              WiFi functionnality asn basic web server.
 //
+// History:     2023-10-28      PP Laplante     Created
+//              2023-11-05      PP Laplante     Converted to a class
+//              2023-11-11      PP Laplante     Leverage WebServer.h functionnality
+//              2024-01-09      PP Laplante     urlDecode params by default
+//
 //------------------------------------------------------------------------------------------
 #include <Arduino.h>
 #include <WiFi.h>
@@ -12,10 +17,6 @@
 #include <fileutils.h>
 #include <WebServer.h>
 #include <MiniServ.h>
-
-//Known Issues:
-//  - All effects are now set as default regardless if checkbox is set or not
-//  - When getting current effect, string is mangled when received by client.
 
 //References:
 //https://github.com/espressif/arduino-esp32/blob/master/libraries/WebServer/
