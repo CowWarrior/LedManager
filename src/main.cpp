@@ -1,33 +1,37 @@
-//+--------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
 //
-// File:        main.cpp
+// File:            main.cpp
 //
-// Project:     LedDriver 
+// Project:         LedDriver 
 //
-// Description: The purpose of this project is to provide a light and 
-//              streamlined version of a Manager for the WS2812B LED Strip 
-//              hosted on a ESP32 microcontroller development board.
+// Description:     The purpose of this project is to provide a light and 
+//                  streamlined version of a Manager for the WS2812B LED Strip 
+//                  hosted on a ESP32 microcontroller development board.
 //
-// Credits:     This project is inspired from NightDriverStrip
-//              https://github.com/PlummersSoftwareLLC/NightDriverStrip
-//              https://www.youtube.com/watch?v=UZxY_BLSsGg
+// Credits:         This project is inspired from NightDriverStrip
+//                  https://github.com/PlummersSoftwareLLC/NightDriverStrip
+//                  https://www.youtube.com/watch?v=UZxY_BLSsGg
 //
-// History:     2023-10-28    PP Laplante   Created
-//              2023-11-13    PP Laplante   Use new MiniServ web server
-//              2023-12-22    PP Laplante   Implemented Showcase
+// History:         2023-10-28    PP Laplante   Created
+//                  2023-11-13    PP Laplante   Use new MiniServ web server
+//                  2023-12-22    PP Laplante   Implemented Showcase
+//                  2024-01-07    PP Laplante   Implemented NTP real time clock sync
+//                  2024-01-09    PP Laplante   Set default persistance
 //
+// Known Issues:    - All effects are now set as default regardless if checkbox is set or not
+//                  - When getting current effect, string is mangled when received by client.
 //
-//---------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
 
 // Global Constants
-#define LED_MATRIX_WIDTH        60
-#define LED_MATRIX_HEIGHT       1
+#define LED_MATRIX_WIDTH        16
+#define LED_MATRIX_HEIGHT       16
 #define LED_NUM_LEDS            (MATRIX_WIDTH*MATRIX_HEIGHT)
-#define LED_MATRIX_INTERLACED   0
+#define LED_MATRIX_INTERLACED   1
 #define LED_GPIO_PIN            13
 #define BOARD_PIN_LED           2
 #define WIFIUTILS_SERVERPORT    80
-#define LED_DEFAULT_EFFECT      "Default"
+#define LED_DEFAULT_EFFECT      "SHOWCASE"
 #define LED_DEFAULT_SHOWCASE    false
 
 #define CONFIG_FILE             "/config.json"
