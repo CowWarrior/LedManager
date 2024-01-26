@@ -5,8 +5,8 @@
 // Description: The purpose of this file is to provide utility functions
 //              for the FastLED library.
 //
-// History:     2023-10-28    PP Laplante   Created
-//
+// History:     2023-10-28      PP Laplante     Created
+//              2024-01-20      PP Laplante     Converted library to Class
 //
 //---------------------------------------------------------------------------
 #include <Arduino.h>
@@ -14,84 +14,55 @@
 #include <FastLED.h>
 #include <fastledutils.h>
 
-//uncomment to enable debug mode
-#define FASTLEDUTILS_DEBUGMODE  1
-
-#ifndef LED_MATRIX_WIDTH
-#define LED_MATRIX_WIDTH        16
-#endif
-
-#ifndef LED_MATRIX_HEIGHT
-#define LED_MATRIX_HEIGHT       16
-#endif
-
-#ifndef LED_NUM_LEDS
-#define LED_NUM_LEDS            (LED_MATRIX_WIDTH*LED_MATRIX_HEIGHT)
-#endif
-
-#ifndef LED_MATRIX_INTERLACED
-#define LED_MATRIX_INTERLACED   0
-#endif
-
-#ifndef LED_GPIO_PIN
-#define LED_GPIO_PIN            13
-#endif
-
-#ifndef LED_PX_PER_METER
-#define LED_PX_PER_METER        60
-#endif
-
 //Global variables
-CRGB leds[LED_NUM_LEDS];                        //Main LED array
-long ledFramerate = 100;                        //current framerate in milliseconds
-int ledFrameIndex = 0;                          //Current frame index
-int ledBrightness = 64;                         //Current LED brightness
-String ledCurrentEffect = "DEFAULT";            //currently displayed effect
-String ledCurrentEffectParameters = "";         //current effect params
-unsigned long ledCurrentTime = millis();        // Current time
-unsigned long ledPreviousTime = 0;              // Previous time
 
-//Local Prototypes
-void DrawLEDCurrentEffectFrame();
-void DrawLEDBeatEffect();
-void DrawLEDRainbowEffect();
-void DrawLEDSolidEffect();
-void DrawLEDImageEffect();
-void DrawLEDPatternEffect();
+
+//Default constructor
+FastLEDUtils::FastLEDUtils()
+{
+    //nothing to do 
+}
 
 //Initialize LED display
-void InitLED()
+void FastLEDUtils::InitLED(int width, int height, bool interlaced)
 {
+    //Initialize 'constants'
+    _MATRIX_WIDTH = width;
+    _MATRIX_HEIGHT = height;
+    _MATRIX_INTERLACED = interlaced;
+    _NUM_LEDS = _MATRIX_WIDTH * _MATRIX_HEIGHT;
+
     //Initialize default values
     SetLEDCurrentEffect("DEFAULT");
     SetLEDTravelSpeed(1.0f);
 
     //intialize FastLED
-    FastLED.addLeds<WS2812, LED_GPIO_PIN, GRB>(leds, LED_NUM_LEDS);
+    //FastLED.addLeds<WS2812, _GPIO_PIN, GRB>(_leds, _NUM_LEDS);
+    FastLED.addLeds<WS2812, FLU_GPIO_PIN, GRB>(_leds, _NUM_LEDS);
 
     //set initial brightness
-    SetLEDBrightness(ledBrightness);
+    SetLEDBrightness(_ledBrightness);
 
     #ifdef FASTLEDUTILS_DEBUGMODE
         if (Serial)
         {
             Serial.println("FastLED initialized...");
             Serial.print("FastLED GPIO pin set to: ");
-            Serial.println(LED_GPIO_PIN);
+            Serial.println(FLU_GPIO_PIN);
             Serial.print("Brightness set to: ");
-            Serial.println(ledBrightness);
+            Serial.println(_ledBrightness);
         }
     #endif
 }
 
 //Sets which effect should be displayed, optionally choosing parameters
-void SetLEDCurrentEffect(String effect, String parameters)
+void FastLEDUtils::SetLEDCurrentEffect(String effect, String parameters)
 {
-    ledCurrentEffect = effect;
-    ledCurrentEffect.trim();
-    ledCurrentEffect.toUpperCase();
-    ledCurrentEffectParameters = parameters;
-    ledFrameIndex = 0;
+    _ledCurrentEffect = effect;
+    _ledCurrentEffect.trim();
+    _ledCurrentEffect.toUpperCase();
+    _ledCurrentEffectParameters = parameters;
+    _ledFrameIndex = 0;
     FastLED.clear();
     FastLED.show();
 
@@ -99,29 +70,29 @@ void SetLEDCurrentEffect(String effect, String parameters)
         if (Serial)
         {
             Serial.print("Current effect set to: ");
-            Serial.println(ledCurrentEffect);
+            Serial.println(_ledCurrentEffect);
             Serial.print("Current effect parameters: ");
-            Serial.println(ledCurrentEffectParameters);
+            Serial.println(_ledCurrentEffectParameters);
         }
     #endif
 }
 
 //Gets which effect is currently displayed
-String GetLEDCurrentEffect()
+String FastLEDUtils::GetLEDCurrentEffect()
 {
-    return ledCurrentEffect;    
+    return _ledCurrentEffect;    
 }
 
 //Gets parameter for current effect displayed
-String GetLEDCurrentEffectParameters()
+String FastLEDUtils::GetLEDCurrentEffectParameters()
 {
-    return ledCurrentEffectParameters;    
+    return _ledCurrentEffectParameters;    
 }
 
 //Sets the speed which leds should travel in meters per second
-void SetLEDTravelSpeed(float speed_m_per_s)
+void FastLEDUtils::SetLEDTravelSpeed(float speed_m_per_s)
 {
-    ledFramerate = (int) 1000 / speed_m_per_s / LED_PX_PER_METER;
+    _ledFramerate = (int) 1000 / speed_m_per_s / _PX_PER_METER;
 
     #ifdef FASTLEDUTILS_DEBUGMODE
         if (Serial)
@@ -129,83 +100,83 @@ void SetLEDTravelSpeed(float speed_m_per_s)
             Serial.print("Travel speed set to: ");
             Serial.print(speed_m_per_s);
             Serial.print("m/s , Framerate: ");
-            Serial.print(ledFramerate);
+            Serial.print(_ledFramerate);
             Serial.println("ms.");
         }
     #endif
 }
 
 //Gets the speed which leds should travel in meters per second
-float GetLEDTravelSpeed()
+float FastLEDUtils::GetLEDTravelSpeed()
 {
-    return LED_PX_PER_METER / (1000 / ledFramerate);
+    return _PX_PER_METER / (1000 / _ledFramerate);
 }
 
 //Gets the speed which leds refresh in milliseconds
-long GetLEDFramerate()
+long FastLEDUtils::GetLEDFramerate()
 {
-    return ledFramerate;
+    return _ledFramerate;
 }
 
 //Sets the relative brightness of the LED strip (0-255)
-void SetLEDBrightness(int brightness)
+void FastLEDUtils::SetLEDBrightness(int brightness)
 {
     //set default brightness
-    ledBrightness = brightness;
+    _ledBrightness = brightness;
 
     //clamp
-    if (ledBrightness < 0)
-        ledBrightness = 0;
-    else if (ledBrightness > 255)
-        ledBrightness = 255;
+    if (_ledBrightness < 0)
+        _ledBrightness = 0;
+    else if (_ledBrightness > 255)
+        _ledBrightness = 255;
 
     //apply it
-    FastLED.setBrightness(ledBrightness);
+    FastLED.setBrightness(_ledBrightness);
     FastLED.show();
 
     #ifdef FASTLEDUTILS_DEBUGMODE
         if (Serial)
         {
             Serial.print("Brightness set to: ");
-            Serial.println(ledBrightness);
+            Serial.println(_ledBrightness);
         }
     #endif
 }
 
 //Gets the relative brightness of the LED strip (0-255)
-int GetLEDBrightness()
+int FastLEDUtils::GetLEDBrightness()
 {
-    return ledBrightness;
+    return _ledBrightness;
 }
 
 
 //Draws the LED effect current frame - to be added to the main loop
-void DrawLEDFrame()
+void FastLEDUtils::DrawLEDFrame()
 {
     //update current time
-    ledCurrentTime = millis();
+    _ledCurrentTime = millis();
 
     //check if it is time to draw
-    if (ledCurrentTime > ledFramerate + ledPreviousTime)
+    if (_ledCurrentTime > _ledFramerate + _ledPreviousTime)
     {
         DrawLEDCurrentEffectFrame();
 
         //update previous time the frame was drawn
-        ledPreviousTime = ledCurrentTime;
+        _ledPreviousTime = _ledCurrentTime;
     }
 }
 
 //Draws the next frame for the effect
-void DrawLEDCurrentEffectFrame()
+void FastLEDUtils::DrawLEDCurrentEffectFrame()
 {
     //choose the right effect
-    if (ledCurrentEffect == "RAINBOW")
+    if (_ledCurrentEffect == "RAINBOW")
         DrawLEDRainbowEffect();
-    else if (ledCurrentEffect == "SOLID")
+    else if (_ledCurrentEffect == "SOLID")
         DrawLEDSolidEffect();
-    else if (ledCurrentEffect == "IMAGE")
+    else if (_ledCurrentEffect == "IMAGE")
         DrawLEDImageEffect();
-    else if (ledCurrentEffect == "PATTERN")
+    else if (_ledCurrentEffect == "PATTERN")
         DrawLEDPatternEffect();
     else
         DrawLEDBeatEffect(); //Default to beat effect
@@ -213,7 +184,7 @@ void DrawLEDCurrentEffectFrame()
 }
 
 // BEAT EFFECT
-void DrawLEDBeatEffect()
+void FastLEDUtils::DrawLEDBeatEffect()
 {
     static bool isReverse = false;
 
@@ -221,27 +192,27 @@ void DrawLEDBeatEffect()
     CRGB targetColor = CRGB(0, 0, 64);
 
     //override default color if specified
-    if (ledCurrentEffectParameters != "")
-        targetColor = CRGB(HexStrToInt(ledCurrentEffectParameters));
+    if (_ledCurrentEffectParameters != "")
+        targetColor = CRGB(HexStrToInt(_ledCurrentEffectParameters));
 
     if (!isReverse)
     {
         //FORWARD       
         
         //light new led
-        leds[ledFrameIndex] = targetColor;
+        _leds[_ledFrameIndex] = targetColor;
 
         //cehck if we reached the end
-        if (ledFrameIndex >= LED_NUM_LEDS-1)
+        if (_ledFrameIndex >= _NUM_LEDS-1)
         {
             //SwitchDirection
             isReverse = true;
-            ledFrameIndex = LED_NUM_LEDS - 1;
+            _ledFrameIndex = _NUM_LEDS - 1;
         }
         else
         {
             //go on
-            ledFrameIndex++;
+            _ledFrameIndex++;
         }
     }
     else
@@ -249,19 +220,19 @@ void DrawLEDBeatEffect()
         //BACKWARDS
 
         //turn-off led
-        leds[ledFrameIndex] = CRGB::Black;
+        _leds[_ledFrameIndex] = CRGB::Black;
 
         //cehck if we reached the start
-        if (ledFrameIndex <= 0)
+        if (_ledFrameIndex <= 0)
         {
             //SwitchDirection
             isReverse = false;
-            ledFrameIndex = 0;
+            _ledFrameIndex = 0;
         }
         else
         {
             //go on
-            ledFrameIndex--;
+            _ledFrameIndex--;
         }
     }
 
@@ -270,7 +241,7 @@ void DrawLEDBeatEffect()
 }
 
 
-void set_rainbow_pixel(int angle, int pixel) {
+void FastLEDUtils::set_rainbow_pixel(int angle, int pixel) {
   //original code: Ontaelio
   //https://www.instructables.com/How-to-Make-Proper-Rainbow-and-Random-Colors-With-/
 
@@ -283,16 +254,16 @@ void set_rainbow_pixel(int angle, int pixel) {
   if (angle<300) {red = round((angle-240)*4.25-0.01), green = 0; blue = 255;} else 
                 {red = 255, green = 0; blue = round((360-angle)*4.25-0.01);}
     
-  leds[pixel] = CRGB( red, green, blue);
+  _leds[pixel] = CRGB( red, green, blue);
 }
 
-void DrawLEDRainbowEffect()
+void FastLEDUtils::DrawLEDRainbowEffect()
 {
     static bool isReverse = false;
     static int currAngle = 0;       //TODO: use frameindex instead of a static!
 
     //set all LEDS
-    for (int i = 0; i <= LED_NUM_LEDS-1; i++) {
+    for (int i = 0; i <= _NUM_LEDS-1; i++) {
       //light new pixel
       set_rainbow_pixel(currAngle, i);
     }
@@ -321,10 +292,10 @@ void DrawLEDRainbowEffect()
 
 }
 
-void DrawLEDSolidEffect()
+void FastLEDUtils::DrawLEDSolidEffect()
 {
     //only need to do this once really
-    if (ledFrameIndex == 0)
+    if (_ledFrameIndex == 0)
     {
         // uint32_t targetColor = ledCurrentEffectParameters.toInt();
 
@@ -333,7 +304,7 @@ void DrawLEDSolidEffect()
         // ledCurrentEffectParameters.toCharArray(c, 7);
         // targetColor = HexStrToInt(c);
 
-        uint32_t targetColor = HexStrToInt(ledCurrentEffectParameters);
+        uint32_t targetColor = HexStrToInt(_ledCurrentEffectParameters);
 
         #ifdef FASTLEDUTILS_DEBUGMODE
             if (Serial)
@@ -344,25 +315,25 @@ void DrawLEDSolidEffect()
         #endif
 
         //set all LEDS
-        for (int i = 0; i <= LED_NUM_LEDS-1; i++) {
+        for (int i = 0; i <= _NUM_LEDS-1; i++) {
             //light new pixel
-            leds[i] = CRGB(targetColor);
+            _leds[i] = CRGB(targetColor);
         }
 
         //update strip
         FastLED.show();
 
         //change frame
-        ledFrameIndex = 1;
+        _ledFrameIndex = 1;
     }
 }
 
-void DrawLEDPatternEffect()
+void FastLEDUtils::DrawLEDPatternEffect()
 {
     //only need to do this once really
-    if (ledFrameIndex == 0)
+    if (_ledFrameIndex == 0)
     {
-        int patternLength = ledCurrentEffectParameters.length() / 6;
+        int patternLength = _ledCurrentEffectParameters.length() / 6;
         uint32_t patternArray[patternLength];
 
         //extract pattern from param
@@ -370,7 +341,7 @@ void DrawLEDPatternEffect()
         {
             int start = i*6;
             int end = start+6;
-            String patternPixel = ledCurrentEffectParameters.substring(start, end);
+            String patternPixel = _ledCurrentEffectParameters.substring(start, end);
             uint32_t pixelColor = HexStrToInt(patternPixel);
             patternArray[i] = pixelColor;
         }
@@ -379,7 +350,7 @@ void DrawLEDPatternEffect()
             if (Serial)
             {
                 Serial.print("Pattern \"");
-                Serial.print(ledCurrentEffectParameters);
+                Serial.print(_ledCurrentEffectParameters);
                 Serial.println("\" converted to:");
                 for (int i=0; i<patternLength; i++)
                 {
@@ -394,12 +365,12 @@ void DrawLEDPatternEffect()
         FastLED.clear();
 
         //set all LEDS
-        for (int i = 0; i <= LED_NUM_LEDS-1; i+=patternLength) 
+        for (int i = 0; i <= _NUM_LEDS-1; i+=patternLength) 
         {
             //light segement
             for (int j=0; j<patternLength; j++)
             {
-                leds[i+j] = CRGB(patternArray[j]);
+                _leds[i+j] = CRGB(patternArray[j]);
             }
             
         }
@@ -408,14 +379,14 @@ void DrawLEDPatternEffect()
         FastLED.show();
 
         //change frame
-        ledFrameIndex = 1;
+        _ledFrameIndex = 1;
     }
 }
 
-void DrawLEDImageEffect()
+void FastLEDUtils::DrawLEDImageEffect()
 {
     //only need to do this once really
-    if (ledFrameIndex == 0)
+    if (_ledFrameIndex == 0)
     {
         //LINK Frame 1
         int frames[1][16][16];
@@ -433,7 +404,7 @@ void DrawLEDImageEffect()
         for (int i = 0; i <= 15; i++) {
             for (int j = 0; j <= 15; j++) {
                 //set matrix color value
-                String hexVal = ledCurrentEffectParameters.substring(kk, kk+6);
+                String hexVal = _ledCurrentEffectParameters.substring(kk, kk+6);
                 int intVal = HexStrToInt(hexVal);
                 frames[0][i][j] = intVal;
 
@@ -464,9 +435,9 @@ void DrawLEDImageEffect()
             for (int j = 0; j <= 15; j++) {
                 
                 if (i == 0 || i % 2 == 0)
-                    leds[k] = CRGB(frames[0][i][15-j]);
+                    _leds[k] = CRGB(frames[0][i][15-j]);
                 else
-                    leds[k] = CRGB(frames[0][i][j]);
+                    _leds[k] = CRGB(frames[0][i][j]);
 
                 k++;
             }
@@ -479,6 +450,7 @@ void DrawLEDImageEffect()
         FastLED.show();
 
         //change frame
-        ledFrameIndex = 1;
+        _ledFrameIndex = 1;
     }
 }
+ 

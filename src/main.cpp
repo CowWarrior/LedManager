@@ -24,11 +24,9 @@
 //----------------------------------------------------------------------------------------------
 
 // Global Constants
-#define LED_MATRIX_WIDTH        16
-#define LED_MATRIX_HEIGHT       16
-#define LED_NUM_LEDS            (MATRIX_WIDTH*MATRIX_HEIGHT)
-#define LED_MATRIX_INTERLACED   1
-#define LED_GPIO_PIN            13
+#define LED_MATRIX_WIDTH        60
+#define LED_MATRIX_HEIGHT       1
+#define LED_MATRIX_INTERLACED   false
 #define BOARD_PIN_LED           2
 #define WIFIUTILS_SERVERPORT    80
 #define LED_DEFAULT_EFFECT      "SHOWCASE"
@@ -39,6 +37,10 @@
 #define IMAGE_EXT               ".dat"
 
 #define DEBUGMODE              1
+
+//FastLedUtils Constants
+#define FLU_GPIO_PIN            13
+#define FLU_MAX_LEDS            60
 
 //Libraries
 #include <Arduino.h>
@@ -72,6 +74,7 @@ unsigned long _showcasePreviousTime = millis() - _showcaseDelayMs - 1;
 LedManagerConfiguration _config;
 NtpHelper _timeLord = NtpHelper();
 String _currentEffect = "";
+FastLEDUtils _ledController = FastLEDUtils();
 
 //Prototyopes
 bool ReadConfig();
@@ -176,7 +179,7 @@ void setup() {
 
 
     //Initialize LEDs
-    InitLED();
+    _ledController.InitLED(LED_MATRIX_WIDTH, LED_MATRIX_HEIGHT, LED_MATRIX_INTERLACED);
 
     //Apply initial effect (from config if possible)
     if (_config.effectDefault != "")
@@ -199,7 +202,7 @@ void loop() {
     HandleShowcaseMode();
 
     //Handle LED display
-    DrawLEDFrame();
+    _ledController.DrawLEDFrame();
 }
 
 void HandleGetEffect()
@@ -208,7 +211,7 @@ void HandleGetEffect()
     BlinkBoardData();
 
     //build information
-    String effectInfo = "{\"effect\": \"" + _currentEffect + "\", \"brightness\": " + GetLEDBrightness() + "}";
+    String effectInfo = "{\"effect\": \"" + _currentEffect + "\", \"brightness\": " + _ledController.GetLEDBrightness() + "}";
 
     //Return current effect
     _server.SendResponse(effectInfo, 200, "application/json");
@@ -218,6 +221,12 @@ void HandleSetEffect()
 {
     //indicate data received
     BlinkBoardData();
+
+
+
+    PrintSerial("Query String: ");
+    PrintlnSerial(_server.GetRequestPath());
+
 
     //read parameters
     String p_effect = _server.GetQueryStringParameter("name");
@@ -229,13 +238,10 @@ void HandleSetEffect()
     String p_imgname = _server.GetQueryStringParameter("imgname");
     String p_setdefault = _server.GetQueryStringParameter("setdefault");
 
-    PrintSerial("Query String: ");
-    PrintlnSerial(_server.GetRequestPath());
-
     #ifdef DEBUGMODE
         PrintlnSerial("effect:" + p_effect);
         PrintlnSerial("color:" + p_color);
-        PrintlnSerial("brightness:" +p_brightness);
+        PrintlnSerial("brightness:" + p_brightness);
         PrintlnSerial("imgname:" + p_imgname);
         PrintlnSerial("setdefault:" + p_setdefault);
     #endif
@@ -253,7 +259,7 @@ void HandleSetEffect()
 
     //adjust brightness if required
     if (p_brightness != "")
-        SetLEDBrightness(HexStrToInt(p_brightness));
+        _ledController.SetLEDBrightness(HexStrToInt(p_brightness));
 
     //change default if required
     if (p_setdefault == "1")
@@ -272,56 +278,56 @@ void ActivateEffect(String effect, String color, String brightness, String imgna
     if (effect == "default")
     {
         _currentEffect = "default";
-        SetLEDCurrentEffect("Default");   
+        _ledController.SetLEDCurrentEffect("Default");
     }
     else if (effect == "solid")
     {
         _showcaseMode=false;
         _currentEffect = "solid";
-        SetLEDCurrentEffect("Solid", color);
+        _ledController.SetLEDCurrentEffect("Solid", color);
     }
     else if (effect == "off")
     {
         _showcaseMode=false;
         _currentEffect = "off";
-        SetLEDCurrentEffect("Solid", "000000");
+        _ledController.SetLEDCurrentEffect("Solid", "000000");
     }    
     else if (effect == "beat")
     {
         _showcaseMode=false;
         _currentEffect = "beat";
-        SetLEDCurrentEffect("Beat", color);
+        _ledController.SetLEDCurrentEffect("Beat", color);
     }
     else if (effect == "rainbow")
     {
         _showcaseMode=false;
         _currentEffect = "rainbow";
-        SetLEDCurrentEffect("Rainbow");
+        _ledController.SetLEDCurrentEffect("Rainbow");
     }
     else if (effect == "northpole")
     {
         _showcaseMode=false;
         _currentEffect = "northpole";
-        SetLEDCurrentEffect("Pattern", "FF0000000000000000FFFFFF000000000000");
+        _ledController.SetLEDCurrentEffect("Pattern", "FF0000000000000000FFFFFF000000000000");
     }
     else if (effect == "quebec")
     {
         _showcaseMode=false;
         _currentEffect = "quebec";
-        SetLEDCurrentEffect("Pattern", "0000FF000000000000FFFFFF000000000000");
+        _ledController.SetLEDCurrentEffect("Pattern", "0000FF000000000000FFFFFF000000000000");
     }    
     else if (effect == "festive")
     {
         //bleu orange vert roughe jaune
         _showcaseMode=false;
         _currentEffect = "fastive";
-        SetLEDCurrentEffect("Pattern", "0000FF00000000000000FF000000000000000000FF000000000000F3E220000000000000FF0000000000000000");
+        _ledController.SetLEDCurrentEffect("Pattern", "0000FF00000000000000FF000000000000000000FF000000000000F3E220000000000000FF0000000000000000");
     }
     else if (effect == "image")
     {
         _showcaseMode=false;
         _currentEffect = "image";
-        SetLEDCurrentEffect("Image", FSReadFile(IMAGE_DIR + imgname + IMAGE_EXT));
+        _ledController.SetLEDCurrentEffect("Image", FSReadFile(IMAGE_DIR + imgname + IMAGE_EXT));
     }
     else if (effect == "showcase")
     {
@@ -622,7 +628,7 @@ void HandleShowcaseMode()
             _showcaseImageIndex++;
 
             //display image
-            SetLEDCurrentEffect("Image", FSReadFile(imgName));
+            _ledController.SetLEDCurrentEffect("Image", FSReadFile(imgName));
         }
     }
 }
