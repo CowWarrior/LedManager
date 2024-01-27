@@ -51,6 +51,7 @@
 #include <fileutils.h>
 #include <ArduinoJson.h>
 #include <NtpHelper.h>
+#include <version.h>
 
 struct LedManagerConfiguration
 {
@@ -68,6 +69,7 @@ struct DeviceInformation
     char    deviceSSID[33] = "MyWiFi";
     char    deviceHostname[33] = "PIXELART";
     int     deviceSignal = 0;
+    char    firmwareVersion[33] = VERSION_SHORT;
 };
 
 
@@ -412,6 +414,7 @@ String SerializeDeviceInfo()
     doc["device"]["ssid"] = _deviceInfo.deviceSSID;
     doc["device"]["mac"] = _deviceInfo.deviceMAC;
     doc["device"]["signal"] = _deviceInfo.deviceSignal;
+    doc["device"]["firmware"] = _deviceInfo.firmwareVersion;
 
     //serialize data
     serializeJson(doc, info);
