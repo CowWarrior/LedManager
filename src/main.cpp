@@ -93,6 +93,7 @@ void HandleSetConfig();
 void HandleGetConfig();
 void HandleConfigPage();
 void ActivateEffect(String effect, String color="", String brightness="", String imgname="");
+void HandleReboot();
 
 void setup() {
     //initialize pins
@@ -168,6 +169,7 @@ void setup() {
     _server.WServer.on("/api/config", HTTP_PUT, HandleSetConfig);
     _server.WServer.on("/api/config", HTTP_POST, HandleSetConfig);
     _server.WServer.on("/api/config", HTTP_GET, HandleGetConfig);
+    _server.WServer.on("/api/reboot", HandleReboot);
 
 
     //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
@@ -742,4 +744,9 @@ void HandleGetConfig()
     String configData = SerializeConfig(true);
 
     _server.SendResponse(configData, 200, "application/json");
+}
+
+void HandleReboot()
+{
+    ESP.restart();
 }
