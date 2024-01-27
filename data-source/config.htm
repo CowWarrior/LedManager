@@ -24,22 +24,17 @@
 
               </div>
               <div class="col-md-4">
-                <form>
-                    
-                </form>
-
-
                 <h2>Config</h2>
 
                 <form action="/api/config" method="POST">
                     <label for="txtSSID">SSID:</label>
-                    <input type="text" id="txtSSID" name="txtSSID" value="MyWiFi"><br>
+                    <input type="text" id="txtSSID" name="txtSSID" value="MyWiFi" required><br>
             
                     <label for="txtPwd">Password:</label>
-                    <input type="password" id="txtPwd" name="txtPwd" value=""><br>
+                    <input type="password" id="txtPwd" name="txtPwd" value="" required><br>
 
                     <label for="txtHostname">Hostname:</label>
-                    <input type="text" id="txtHostname" name="txtHostname" value="PIXELART"><br>
+                    <input type="text" id="txtHostname" name="txtHostname" value="PIXELART" required><br>
 
                     <input type="button" value="Reload" onclick="loadJSONData()">
                     <input type="button" value="Save" onclick="postJSONData()">
@@ -49,8 +44,18 @@
               <div class="col-md-4">
            
             </div>
+            <div class="row">
+                <div class="col-md-4 ">
+  
+                </div>
+                <div class="col-md-4">
+                  <h2>Device</h2>
+                  <input type="button" value="Reboot" onclick="rebootDevice()">
+                </div>
+                <div class="col-md-4">
+             
+              </div>
             <hr>
-
             <footer>
                 <p>Mini LED Server</p>
             </footer>
@@ -90,42 +95,72 @@
                 xhr.send();
             }
 
-            function postJSONData() {
-                //read user input
+            function isFormValid() {
                 var ssid = document.getElementById("txtSSID").value;
                 var password = document.getElementById("txtPwd").value;
                 var hostname = document.getElementById("txtHostname").value;
-                var jsonData = {
-                    ssid: ssid,
-                    pwd: password,
-                    hostname: hostname
-                }
-                var url = "./api/config?configdata=" + JSON.stringify(jsonData);
 
+                if (ssid != "" && password != "" && hostname != "")
+                    return true;
+                else
+                    return false;
+            }
+
+            function postJSONData() {
+                if (!isFormValid())
+                    alert("Please fill all the form fields.");
+                else
+                {
+                    //read user input
+                    var ssid = document.getElementById("txtSSID").value;
+                    var password = document.getElementById("txtPwd").value;
+                    var hostname = document.getElementById("txtHostname").value;
+                    var jsonData = {
+                        ssid: ssid,
+                        pwd: password,
+                        hostname: hostname
+                    }
+                    var url = "./api/config?configdata=" + JSON.stringify(jsonData);
+
+                    // Create a new XMLHttpRequest object
+                    var xhr = new XMLHttpRequest();              
+
+                    // Configure the request
+                    xhr.open("POST", url, true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+
+                    // Define the callback function to handle the response
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            alert("Configuration saved! Please restart the device.");
+                        }
+                        else if (xhr.readyState === 4) {
+                            alert("Error loading JSON data. Status code: " + xhr.status);
+                        }
+                    };
+
+                    // Send the request
+                    xhr.send();
+                }
+            }
+
+            function rebootDevice() {
                 // Create a new XMLHttpRequest object
                 var xhr = new XMLHttpRequest();              
 
                 // Configure the request
-                xhr.open("POST", url, true);
+                xhr.open("POST", "/api/reboot", true);
                 xhr.setRequestHeader("Content-Type", "application/json");
-
-                // Define the callback function to handle the response
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4 && xhr.status === 200) {
-                        alert("Configuration saved! Please restart the device.");
-                    }
-                    else if (xhr.readyState === 4) {
-                        alert("Error loading JSON data. Status code: " + xhr.status);
-                    }
-                };
 
                 // Send the request
                 xhr.send();
-            }
-            
+                alert("Rebooting device. It may take up to one minute to re-connect to WiFi...");
+                window.location.href = "/";
+            }            
+
             // Call the loadJSONData function when the page is ready
             document.addEventListener("DOMContentLoaded", function() {
-                loadJSONData(); 
+                loadJSONData();
             });
         </script>
     </body>
