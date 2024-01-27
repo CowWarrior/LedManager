@@ -14,6 +14,7 @@
         <div class="jumbotron">
             <div class="container">
                 <h1>Mini LED Server</h1>
+                <h2><span id="txtHostname"></span></h2>
                 <p>Control your LEDstrip or array from here.</p>
             </div>
         </div>
@@ -95,7 +96,7 @@
             <hr>
 
             <footer>
-                <p>Mini LED Server</p>
+                <p>Mini LED Server (<span id="txtVersion"></span>) - <span id="txtSSID"></span><span id="txtdBm"></span></p>
             </footer>
         </div> <!-- /container -->
         
@@ -288,6 +289,54 @@
                     }
                 });
             }
+            function updateDeviceInfo()
+            {
+                $.ajax({
+                    url: "./api/info",
+                    success: function (data) {
+                        var hostname = data.device.hostname;
+                        var ip = data.device.ip;
+                        var firmware = data.device.firmware;
+                        var signal = data.device.signal;
+                        var ssid = data.device.ssid;
+
+                        //show info
+                        updateSignalStrength(signal);
+                        $("#txtHostname").text(hostname.toUpperCase());
+                        $("#txtIP").text(ip);
+                        $("#txtVersion").text(firmware);
+                        $("#txtSSID").text(ssid);
+                    }
+                });
+            }
+            function updateSignalStrength(dBm)
+            {
+                if (dBm > -30)
+                {
+                    //excellent
+                    $("#txtdBm").html("<i class='bi bi-wifi' alt='Excellent'></i>");
+                }
+                else if (dBm > -67)
+                {
+                    //good
+                    $("#txtdBm").html("<i class='bi bi-wifi' alt='Good'></i>");
+                }
+                else if (dBm > -70)
+                {
+                    //ok
+                    $("#txtdBm").html("<i class='bi bi-wifi-2'  alt='OK'></i>");
+                }
+                else if (dBm > -80)
+                {
+                    //passable
+                    $("#txtdBm").html("<i class='bi bi-wifi-1'  alt='Passable'></i>");
+                }
+                else
+                {
+                    //horrible
+                    $("#txtdBm").html("<i class='bi bi-wifi-off'  alt='Poor'></i>");
+                }
+            }
             function updateCurrentEffect()
             {
                 $.ajax({
@@ -415,6 +464,8 @@
                 //enable popover
                 $('[data-toggle="popover"]').popover(); 
 
+                //update device information
+                updateDeviceInfo();
                 //get form ready
                 refreshForms();
                 //get storage info
