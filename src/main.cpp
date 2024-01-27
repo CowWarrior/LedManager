@@ -61,6 +61,15 @@ struct LedManagerConfiguration
     String  effectDefault = "DEFAULT";
 };
 
+struct DeviceInformation
+{
+    char    deviceMAC[18] = "00:00:00:00:00:00";
+    char    deviceIP[16] = "0.0.0.0";
+    char    deviceSSID[33] = "MyWiFi";
+    char    deviceHostname[33] = "PIXELART";
+    int     deviceSignal = 0;
+};
+
 
 //Global Variables
 MiniServ _server;
@@ -72,6 +81,7 @@ unsigned long _showcasePreviousTime = millis() - _showcaseDelayMs - 1;
 LedManagerConfiguration _config;
 NtpHelper _timeLord = NtpHelper();
 String _currentEffect = "";
+DeviceInformation _deviceInfo;
 
 //Prototyopes
 bool ReadConfig();
@@ -94,6 +104,9 @@ void HandleGetConfig();
 void HandleConfigPage();
 void ActivateEffect(String effect, String color="", String brightness="", String imgname="");
 void HandleReboot();
+void HandleGetInfo();
+void UpdateDeviceInfo();
+String SerializeDeviceInfo();
 
 void setup() {
     //initialize pins
@@ -170,6 +183,7 @@ void setup() {
     _server.WServer.on("/api/config", HTTP_POST, HandleSetConfig);
     _server.WServer.on("/api/config", HTTP_GET, HandleGetConfig);
     _server.WServer.on("/api/reboot", HandleReboot);
+    _server.WServer.on("/api/info", HandleGetInfo);
 
 
     //https://techtutorialsx.com/2018/10/12/esp32-http-web-server-handling-body-data/
@@ -366,9 +380,58 @@ void HandleNotFound()
     _server.SendFileNotFound("/www/err404.htm");
 }
 
+void UpdateDeviceInfo()
+{
+    //update device info
+    strcpy(_deviceInfo.deviceHostname, WiFi.getHostname());
+    strcpy(_deviceInfo.deviceIP, WiFi.localIP().toString().c_str());
+    strcpy(_deviceInfo.deviceMAC, WiFi.macAddress().c_str());
+    _deviceInfo.deviceSignal = WiFi.RSSI();
+    strcpy(_deviceInfo.deviceSSID, WiFi.SSID().c_str());
+
+    /*  RSSI signal strength chart
+        https://www.securedgenetworks.com/blog/wifi-signal-strength
+        
+    Greater than
+    > -30 dBm : Excellent signal
+    > -67 dBm : Good signal
+    > -70 dBm : Okay signal
+    > -80 dBm : Poor signal
+    > -90 dBm : Unsusable signal    
+    */
+}
+
+String SerializeDeviceInfo()
+{
+    String info = "";
+    StaticJsonDocument<512> doc;
+
+    //create JSON document form global variable
+    doc["device"]["hostname"] = _deviceInfo.deviceHostname;
+    doc["device"]["ip"] = _deviceInfo.deviceIP;
+    doc["device"]["ssid"] = _deviceInfo.deviceSSID;
+    doc["device"]["mac"] = _deviceInfo.deviceMAC;
+    doc["device"]["signal"] = _deviceInfo.deviceSignal;
+
+    //serialize data
+    serializeJson(doc, info);
+
+    return info;
+}
+
+
+//Serve Raw Info
+void HandleGetInfo()
+{
+    UpdateDeviceInfo();
+    _server.SendResponse(SerializeDeviceInfo());
+}
+
 //Serve Info Page
 void HandleGetInfoPage()
 {
+    UpdateDeviceInfo();
+
     //get headers and convert them to html readable format
     String headers = "Header count: " + String(_server.WServer.headers());
     headers += "<br />";
@@ -385,12 +448,16 @@ void HandleGetInfoPage()
     }
 
     //Build response HTML
-    String response = "<!doctype html><html><head><title>ESP32 Info</title></head><h1>ESP32 Info</h1><p><h2>Headers:</h2>" + headers + 
-                      "</p><p><h2>Hostname</h2>" + WiFi.getHostname() + 
-                      "</p><p><h2>MAC</h2>" + WiFi.macAddress() + 
-                      "</p><p><h2>URI</h2>" + _server.WServer.uri() +
-                      "</p><p><h2>Method</h2>" + method +
-                      "</p><p><h2>Arguments</h2>" + args +
+    String response = "<!doctype html><html><head><title>ESP32 Info</title></head><h1>ESP32 Info</h1><p><h2>Headers</h2>" + headers + 
+                      "</p><p><h2>HTTP Request</h2>URI: " + _server.WServer.uri() +
+                      "<br />Method: " + method +
+                      "<br />Arguments: " + args +
+                      "</p><p><h2>WiFi</h2>" + 
+                      "MAC address: " + _deviceInfo.deviceMAC + 
+                      "<br />IP address: " + _deviceInfo.deviceIP + 
+                      "<br />Hostname: " + _deviceInfo.deviceHostname + 
+                      "<br />SSID: " + _deviceInfo.deviceSSID + 
+                      "<br />Signal strength: " + _deviceInfo.deviceSignal + "dBm" + 
                       "</p></html>";
     
     //send response
