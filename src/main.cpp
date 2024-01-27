@@ -427,7 +427,7 @@ String SerializeDeviceInfo()
 void HandleGetInfo()
 {
     UpdateDeviceInfo();
-    _server.SendResponse(SerializeDeviceInfo());
+    _server.SendResponse(SerializeDeviceInfo(), 200, "application/json");
 }
 
 //Serve Info Page
