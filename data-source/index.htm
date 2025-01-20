@@ -36,10 +36,19 @@
                         <option value="northpole">North Pole (Red & White)</option>
                         <option value="quebec">Qu&eacute;bec (Blue & White)</option>
                         <option value="festive">Multicolor</option>
+                        <option value="pattern" data-pattrn="true">Custom Pattern</option>
                         <option value="off">Off</option>
                     </select>
                     <input id="colSolid" type="color" />
                     <select id="cbxImageEffect"></select>
+                    <div id="grpPattern">
+                        <div id="ctlPatternDisplay"></div>
+                        <br />
+                        <input id="txtPattern" type="hidden" value="" />                        
+                        <input id="colPattern" type="color" />
+                        <input type="button" value="Add" class="btn btn-default" id="btnAddPattern" href="#" role="button" />
+                        <input type="button" value="Remove" class="btn btn-default" id="btnRemovePattern" href="#" role="button" />                        
+                    </div>
                 </p>
                 <p>
                     <a class="btn btn-primary" id="btnEffect" href="#" role="button">Set Effect</a>
@@ -107,6 +116,9 @@
 
         <!-- Page Script -->
         <script lang="JavaScript">
+            //global variables
+            var patternArray = [];
+
             //functions
             //read URL from selected file and load image
             function readURL(input) {
@@ -232,6 +244,9 @@
                 $("#txtImageName").val("");
                 //Clear file selected
                 $("#btnBrowse").val("");
+                //Clear Pattern
+                $("#txtPattern").val("");
+                patternArray = [];
                 //Set default effect
                 updateEffectsControls();
                 //clear upload message
@@ -258,16 +273,23 @@
             {
                 return isSelectedDataAttributeTrue("cbxEffect", "img");
             }
+            function effectHasPattern()
+            {
+                return isSelectedDataAttributeTrue("cbxEffect", "pattrn");
+            }
             function updateEffectsControls() {
                 $("#colSolid").hide();
                 $("#cbxImageEffect").hide();
                 $("#txtSetEffectError").hide();
                 $("#txtSetEffectSuccess").hide();
+                $("#grpPattern").hide();
 
                 if (effectHasImage())
                     $("#cbxImageEffect").show();
                 else if (effectHasColor())
                     $("#colSolid").show();
+                else if (effectHasPattern())
+                    $("#grpPattern").show();
             }
             function updateStorageInfo() {
                 $.ajax({
@@ -356,6 +378,21 @@
                     }
                 });                
             }
+            function addPatternPixel(item) {
+                //maintain space after * so the line wraps
+                let pixel = $("<span>", {"text":"* ", "style":"color: #"+item});
+                $("#ctlPatternDisplay").append(pixel);
+            }
+            function updatePatternData() {
+                //update array
+                $("#txtPattern").val(patternArray.join(""));
+                
+                //Clear control
+                $("#ctlPatternDisplay").html("");
+
+                //Re-populate control
+                patternArray.forEach(addPatternPixel);
+            }
             function toColor(n) {
                 if (n<16)
                     return "0" + n.toString(16);
@@ -374,6 +411,8 @@
                         dat = {name: $("#cbxEffect").val(), imgname: $("#cbxImageEffect").val()};                    
                     else if (effectHasColor())
                         dat = {name: $("#cbxEffect").val(), color: $("#colSolid").val().replace("#", "")};
+                    else if (effectHasPattern())
+                        dat = {name: $("#cbxEffect").val(), color: $("#txtPattern").val()};
                     else
                         dat = {name: $("#cbxEffect").val()};
 
@@ -460,7 +499,17 @@
                         success: function () { refreshForms(); updateStorageInfo(); }
                     });
                 });
-                
+                //Add pattern button
+                $("#btnAddPattern").on("click", function(){
+                    patternArray.push($("#colPattern").val().replace("#", ""));
+                    updatePatternData();
+                });
+                //Remove pattern button
+                $("#btnRemovePattern").on("click", function(){
+                    patternArray.pop();
+                    updatePatternData();
+                });                
+
                 //enable popover
                 $('[data-toggle="popover"]').popover(); 
 
