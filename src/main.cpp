@@ -93,6 +93,7 @@ void HandleGetEffect();
 void HandleNotFound();
 void HandleGetMainPage();
 void RedirectMainPage();
+void HandleGetMainJavascript();
 void HandleGetInfoPage();
 void HandleGetFavIcon();
 void HandleListImages();
@@ -162,6 +163,7 @@ void setup() {
         _server.WServer.on("/default.html", RedirectMainPage);
         _server.WServer.on("/index.htm", RedirectMainPage);
         _server.WServer.on("/index.html", RedirectMainPage);
+        _server.WServer.on("/index.js", HandleGetMainJavascript);
     }
 
     //Standard pages request handling
@@ -367,6 +369,16 @@ void HandleGetMainPage()
     
     //Send the main page fille
     _server.SendFileResponse("/www/index.htm");
+}
+
+//Serve Main Javascript
+void HandleGetMainJavascript()
+{
+    //indicate data received
+    BlinkBoardData();
+    
+    //Send the main page fille
+    _server.SendFileResponse("/www/index.js");
 }
 
 //Redirect to main page
