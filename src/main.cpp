@@ -126,6 +126,13 @@ void setup() {
         #endif
         _configMode = true;
     }
+    else if (_config.wifiSSID == "" || _config.wifiSSID == "null" || _config.wifiSSID.length() > 32)
+    {
+        //SSID is missing or corrupted (ArduinoJson turns a JSON null into "null"; 802.11 SSIDs are max 32 bytes)
+        //skip the WiFi connection timeout and go straight to AP mode
+        PrintlnSerial("Invalid WiFi SSID in configuration: \"" + _config.wifiSSID + "\", skipping WiFi connection.");
+        _configMode = true;
+    }
     else
     {
         //Initialize WiFi
