@@ -55,7 +55,7 @@ $(function(){$("#btnEffect").on("click",function(){var loc="./api/effect";var da
 dat={name:$("#cbxEffect").val(),imgname:$("#cbxImageEffect").val()};else if(effectHasColor())
 dat={name:$("#cbxEffect").val(),color:$("#colSolid").val().replace("#","")};else if(effectHasPattern())
 dat={name:$("#cbxEffect").val(),color:$("#txtPattern").val()};else
-dat={name:$("#cbxEffect").val()};if($("#chkDefaultEffect").val()==="on")
+dat={name:$("#cbxEffect").val()};if($("#chkDefaultEffect").is(":checked"))
 dat.setdefault=1;else
 dat.setdefault=0;$.ajax({url:loc,type:'PUT',data:dat,success:function(data){$("#txtSetEffectSuccess").fadeIn("fast",function(){$("#txtSetEffectSuccessDescription").html(data);setTimeout(function(){$("#txtSetEffectSuccess").fadeOut("slow");},1500);});},error:function(e,msg){$("#txtSetEffectError").fadeIn("fast",function(){$("#txtSetEffectErrorDescription").html(msg);setTimeout(function(){$("#txtSetEffectError").fadeOut("slow");},1500);});}});});$("#cbxEffect").change(function(){updateEffectsControls();});$("#btnBrightness").on("click",function(){var i=parseInt($("#sldBrightness").val());var loc="./api/effect";var dat={brightness:i.toString(16)};$.ajax({url:loc,data:dat});});$("#sldBrightness").on("input",function(){var i=parseInt($("#sldBrightness").val());$("#txtBrightness").text(i.toString()+"%");});$("#btnBrowse").change(function(){readURL(this);});$("#txtImageName").on("keyup",function(){validateUploadForm();});$("#btnUploadImage").on("click",function(){uploadImage();});$("#cbxImageDelete").change(function(){if($("#cbxImageDelete").val()=="")
 {$("#btnDeleteImage").prop("disabled",true);}

@@ -299,7 +299,8 @@ $(function() {
         else
             dat = {name: $("#cbxEffect").val()};
 
-        if ($("#chkDefaultEffect").val() === "on")
+        //.val() on a checkbox is always "on" (its value attribute), use the checked state instead
+        if ($("#chkDefaultEffect").is(":checked"))
             dat.setdefault = 1;
         else
             dat.setdefault = 0;
