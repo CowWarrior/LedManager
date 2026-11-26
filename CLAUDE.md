@@ -92,7 +92,8 @@ including full image data and config JSON. Effect names in the API are lowercase
 
 ### Bugs
 Known bugs are tracked in `BUGS.md` (not GitHub Issues). Check it before working on a bug, and in
-the fixing commit move the entry to **Fixed** with the commit hash.
+the fixing commit move the entry to **Fixed** with the commit hash. Planned features and design
+notes are in `FEATURES.md`.
 
 ### Gotchas
 - The `LED_*` `#define`s at the top of `main.cpp` do **not** reach `fastledutils.cpp` (separate
