@@ -5,23 +5,18 @@ commit as the fix.
 
 ## Open
 
-### Default effect loses its parameters at boot
-- **Symptom:** setting Beat with a custom color as default boots back into blue Beat. Same class of
-  problem for every effect with parameters: Solid boots black (looks off), Pattern boots blank,
-  Image boots blank, and brightness always resets to 64.
-- **Cause:** only the effect *name* is persisted. `HandleSetEffect` stores
-  `_config.effectDefault = _currentEffect`; color, image name and brightness are never written to
-  `config.json`, and `setup()` calls `ActivateEffect(_config.effectDefault)` with no parameters.
-  Beat's built-in fallback color is `CRGB(0, 0, 64)` (`src/fastledutils.cpp`, `DrawLEDBeatEffect`).
-- **Where:** `src/main.cpp` — `HandleSetEffect`, `SerializeConfig`/`DeserializeConfig`, `setup()`.
-- **Fix idea:** add `effect.color`, `effect.imgname`, `effect.brightness` to the config, save them on
-  `setdefault=1`, pass them to `ActivateEffect` at boot; fall back to built-in defaults when absent.
+### Brightness button probably does nothing (suspected — verify)
+- **Cause:** `data-source/index.js` (`#btnBrightness`) sends `$.ajax` with the default method, GET,
+  to `/api/effect?brightness=..`. GET `/api/effect` is routed to `HandleGetEffect`, which only
+  reports the current effect; brightness is only applied by `HandleSetEffect` (PUT/POST).
+- **Impact:** the brightness saved with a default effect is whatever brightness is actually active,
+  so it will stay 64 until this works.
+- **Fix idea:** send `type: 'PUT'` from the brightness button (filesystem upload needed).
 
-### `festive` can't be restored as the default effect
-- **Symptom:** setting Festive as default boots into no effect.
-- **Cause:** typo — `ActivateEffect` sets `_currentEffect = "fastive"`, which is what gets saved; at
-  boot `"fastive"` matches no branch and falls through to the no-op `else`.
-- **Where:** `src/main.cpp`, `ActivateEffect`, `festive` branch.
+### Image effect forces brightness to 16
+- **Cause:** `DrawLEDImageEffect` calls `SetLEDBrightness(16)` on every image draw ("try to tame
+  brightness"), overriding any user or saved brightness for Image and Showcase.
+- **Where:** `src/fastledutils.cpp`, `DrawLEDImageEffect`.
 
 ### Config page sends WiFi settings in the wrong JSON shape (suspected — verify)
 - **Symptom (expected):** saving WiFi settings from the AP config page stores `"null"` for SSID,
@@ -53,6 +48,15 @@ commit as the fix.
 - **Fix idea:** move them to `build_flags` in `platformio.ini` so every file sees them.
 
 ## Fixed
+
+### Default effect lost its parameters at boot — commit "Persist default effect parameters..."
+Setting Beat with a custom color as default booted back into blue Beat (also Solid → black, Pattern
+and Image → blank, brightness → 64). Only the effect *name* was persisted. The config now also
+stores `effect.color`, `effect.imgname` and `effect.brightness`, saved on `setdefault=1` and applied
+at boot; older config files without them fall back to the built-in defaults.
+
+### `festive` couldn't be restored as the default effect — commit "Persist default effect parameters..."
+`ActivateEffect` stored the name as `"fastive"`, which matched no effect at boot.
 
 ### Pattern effect wrote past the LED buffer, corrupting the WiFi config — `734f9c9`
 When 256 isn't a multiple of the pattern length, the draw loop wrote past `leds[]` into adjacent

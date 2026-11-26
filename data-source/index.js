@@ -310,6 +310,9 @@ $(function() {
             type: 'PUT',
             data: dat,
             success: function (data) {
+                //default saved (if requested): reset the checkbox so the next change isn't saved too
+                $("#chkDefaultEffect").prop("checked", false);
+
                 //show success message
                 $("#txtSetEffectSuccess").fadeIn("fast", function() {
                     $("#txtSetEffectSuccessDescription").html(data);

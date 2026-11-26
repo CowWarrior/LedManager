@@ -53,6 +53,9 @@ struct LedManagerConfiguration
     int     wifiTimeout = 60000;
     String  wifiHostname = "PIXELART";
     String  effectDefault = "DEFAULT";
+    String  effectColor = "";           //color (solid/beat) or color list (pattern) of the default effect
+    String  effectImgname = "";         //image name of the default effect (image)
+    int     effectBrightness = -1;      //brightness to apply at boot, -1 = keep LED default
 };
 
 struct DeviceInformation
@@ -76,6 +79,8 @@ unsigned long _showcasePreviousTime = millis() - _showcaseDelayMs - 1;
 LedManagerConfiguration _config;
 NtpHelper _timeLord = NtpHelper();
 String _currentEffect = "";
+String _currentColor = "";              //parameters of the active effect, saved along with it as default
+String _currentImgname = "";
 DeviceInformation _deviceInfo;
 
 //Prototyopes
@@ -198,11 +203,15 @@ void setup() {
     //Initialize LEDs
     InitLED();
 
-    //Apply initial effect (from config if possible)
+    //Apply initial effect (from config if possible), with its saved parameters
     if (_config.effectDefault != "")
-        ActivateEffect(_config.effectDefault);
+        ActivateEffect(_config.effectDefault, _config.effectColor, "", _config.effectImgname);
     else
         ActivateEffect(LED_DEFAULT_EFFECT);
+
+    //Apply saved brightness
+    if (_config.effectBrightness >= 0)
+        SetLEDBrightness(_config.effectBrightness);
 
     //blink twice to indicate we are ready
     BlinkBoard(2, 250);
@@ -263,14 +272,6 @@ void HandleSetEffect()
     //Activate the effect
     ActivateEffect(p_effect, p_color, p_brightness, p_imgname);
 
-    //Respond to client request
-    String responseMesage = "Effect set to: " + p_effect;
-    if (p_color != "")
-        responseMesage += " (" + p_color + ")";
-    if (p_imgname != "")
-        responseMesage += " (" + p_imgname + ")";
-    _server.SendResponse(responseMesage);
-
     //adjust brightness if required
     if (p_brightness != "")
         SetLEDBrightness(HexStrToInt(p_brightness));
@@ -279,12 +280,32 @@ void HandleSetEffect()
     if (p_setdefault == "1")
     {
         _config.effectDefault = _currentEffect;
-        SaveConfig();
+        _config.effectColor = _currentColor;
+        _config.effectImgname = _currentImgname;
+        _config.effectBrightness = GetLEDBrightness();
+
+        if (!SaveConfig())
+        {
+            //respond only once the save is done, so a success response means the default is stored
+            PrintlnSerial("Unable to save default effect: " + _currentEffect);
+            _server.SendResponse("Effect set to: " + p_effect + ", but unable to save it as default.", 500, "text/plain");
+            return;
+        }
 
         #ifdef DEBUGMODE
-            PrintlnSerial("Default changed to: " + _currentEffect);
-        #endif        
+            PrintlnSerial("Default changed to: " + _currentEffect + " (color: " + _currentColor + ", image: " + _currentImgname + ", brightness: " + String(_config.effectBrightness) + ")");
+        #endif
     }
+
+    //Respond to client request
+    String responseMesage = "Effect set to: " + p_effect;
+    if (p_color != "")
+        responseMesage += " (" + p_color + ")";
+    if (p_imgname != "")
+        responseMesage += " (" + p_imgname + ")";
+    if (p_setdefault == "1")
+        responseMesage += ", saved as default";
+    _server.SendResponse(responseMesage);
 }
 
 void ActivateEffect(String effect, String color, String brightness, String imgname)
@@ -334,7 +355,7 @@ void ActivateEffect(String effect, String color, String brightness, String imgna
     {
         //bleu orange vert roughe jaune
         _showcaseMode=false;
-        _currentEffect = "fastive";
+        _currentEffect = "festive";
         SetLEDCurrentEffect("Pattern", "0000FF00000000000000FF000000000000000000FF000000000000F3E220000000000000FF0000000000000000");
     }
     else if (effect == "pattern")
@@ -358,7 +379,12 @@ void ActivateEffect(String effect, String color, String brightness, String imgna
     else
     {
         //sometimes you just want to adjust brightness or color, dont change anything
+        return;
     }
+
+    //remember the parameters of the newly activated effect, so they can be saved with the default effect
+    _currentColor = color;
+    _currentImgname = imgname;
 }
 
 //Serve Main Page
@@ -735,6 +761,10 @@ bool DeserializeConfig(String conf)
     _config.wifiSSID = doc["wifi"]["ssid"].as<String>();
     _config.wifiTimeout = doc["wifi"]["timeout"];
     _config.effectDefault = doc["effect"]["default"].as<String>();
+    //effect parameters are optional (absent in older config files)
+    _config.effectColor = doc["effect"]["color"] | "";
+    _config.effectImgname = doc["effect"]["imgname"] | "";
+    _config.effectBrightness = doc["effect"]["brightness"] | -1;
 
     return true; //success
 }
@@ -750,6 +780,9 @@ String SerializeConfig(bool maskPassword=false)
     doc["wifi"]["ssid"] = _config.wifiSSID;
     doc["wifi"]["timeout"] = _config.wifiTimeout;
     doc["effect"]["default"] = _config.effectDefault;
+    doc["effect"]["color"] = _config.effectColor;
+    doc["effect"]["imgname"] = _config.effectImgname;
+    doc["effect"]["brightness"] = _config.effectBrightness;
 
     if (maskPassword)
         doc["wifi"]["pwd"]="";
