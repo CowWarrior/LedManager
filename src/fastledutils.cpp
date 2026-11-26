@@ -363,6 +363,26 @@ void DrawLEDPatternEffect()
     if (ledFrameIndex == 0)
     {
         int patternLength = ledCurrentEffectParameters.length() / 6;
+
+        //colors beyond the strip length are never displayed; capping also keeps the stack array bounded
+        if (patternLength > LED_NUM_LEDS)
+            patternLength = LED_NUM_LEDS;
+
+        //no colors (e.g. "pattern" restored as default effect without its parameters):
+        //blank the strip instead of looping forever on i += 0 below
+        if (patternLength == 0)
+        {
+            #ifdef FASTLEDUTILS_DEBUGMODE
+                if (Serial)
+                    Serial.println("Pattern is empty, clearing strip.");
+            #endif
+
+            FastLED.clear();
+            FastLED.show();
+            ledFrameIndex = 1;
+            return;
+        }
+
         uint32_t patternArray[patternLength];
 
         //extract pattern from param
@@ -394,10 +414,11 @@ void DrawLEDPatternEffect()
         FastLED.clear();
 
         //set all LEDS
-        for (int i = 0; i <= LED_NUM_LEDS-1; i+=patternLength) 
+        for (int i = 0; i <= LED_NUM_LEDS-1; i+=patternLength)
         {
-            //light segement
-            for (int j=0; j<patternLength; j++)
+            //light segement - the last repetition is truncated when the strip length isn't a
+            //multiple of the pattern length (writing past leds[] corrupts adjacent globals, e.g. the WiFi config)
+            for (int j=0; j<patternLength && i+j<LED_NUM_LEDS; j++)
             {
                 leds[i+j] = CRGB(patternArray[j]);
             }
