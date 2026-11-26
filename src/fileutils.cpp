@@ -5,9 +5,6 @@
 // Description: The purpose of this file is to provide utility functions
 //              for various filesystem support.
 //
-// History:     2023-12-03    PP Laplante   Created
-//
-//
 //---------------------------------------------------------------------------
 
 #include <fileutils.h>

@@ -5,9 +5,6 @@
 // Description: The purpose of this file is to provide utility functions
 //              for the FastLED library.
 //
-// History:     2023-10-28    PP Laplante   Created
-//
-//
 //---------------------------------------------------------------------------
 #include <Arduino.h>
 #include <arduinoutils.h>

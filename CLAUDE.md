@@ -90,6 +90,10 @@ including full image data and config JSON. Effect names in the API are lowercase
 - An **image** (`/images/<name>.dat`) is 256 concatenated `RRGGBB` values (1536 chars), row-major
   for a 16x16 grid. Wiring is serpentine: even rows are reversed when mapped to the strip.
 
+### Bugs
+Known bugs are tracked in `BUGS.md` (not GitHub Issues). Check it before working on a bug, and in
+the fixing commit move the entry to **Fixed** with the commit hash.
+
 ### Gotchas
 - The `LED_*` `#define`s at the top of `main.cpp` do **not** reach `fastledutils.cpp` (separate
   translation unit); it uses its own `#ifndef` defaults. To change matrix size/pin, change them in

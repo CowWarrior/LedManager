@@ -5,11 +5,6 @@
 // Description: The purpose of this file is to provide utility functions
 //              for arduino projects.
 //
-// History:     2023-10-28      PP Laplante     Created
-//              2023-10-29      PP Laplante     Made more generic and 
-//                                              renamed to arduinoutils
-//
-//
 //---------------------------------------------------------------------------
 #include <Arduino.h>
 

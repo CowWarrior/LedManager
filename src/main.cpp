@@ -12,14 +12,7 @@
 //                  https://github.com/PlummersSoftwareLLC/NightDriverStrip
 //                  https://www.youtube.com/watch?v=UZxY_BLSsGg
 //
-// History:         2023-10-28    PP Laplante   Created
-//                  2023-11-13    PP Laplante   Use new MiniServ web server
-//                  2023-12-22    PP Laplante   Implemented Showcase
-//                  2024-01-07    PP Laplante   Implemented NTP real time clock sync
-//                  2024-01-09    PP Laplante   Set default persistance
-//
-// Known Issues:    - All effects are now set as default regardless if checkbox is set or not
-//                  - When getting current effect, string is mangled when received by client.
+// Known Issues:    See BUGS.md
 //
 //----------------------------------------------------------------------------------------------
 
